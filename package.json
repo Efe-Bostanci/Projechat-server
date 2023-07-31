@@ -19,7 +19,7 @@
     "mysql": "^2.18.1",
     "mysql2": "^3.2.3",
     "socket.io": "^4.7.1",
-    "websocket": "^1.0.34"
+    "pm2": "^5.3.0"
   },
   "description": ""
 }
