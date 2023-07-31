@@ -1,8 +1,8 @@
 const http = require('http');
 const server = http.createServer((req, res) => {});
 
-server.listen(3000, () => {
-    console.log("Port 3000 üzerinde dinleniyor...");
+server.listen(4000, () => {
+    console.log("Port 4000 üzerinde dinleniyor...");
 });
 
 const io = require('socket.io')(server);
