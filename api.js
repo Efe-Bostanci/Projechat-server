@@ -18,6 +18,7 @@ const connection = mysql.createConnection({
     password: 'L6P]hm6(3cSOd9',
     database: 'projech1_data'
 });
+
 function mysqlConnetor() {
     connection.connect((err) => {
         if (err) {
@@ -28,13 +29,11 @@ function mysqlConnetor() {
     });
 }
 
-
 //---------------------------------------------------------user---------------------------------------------------------
 app.post('/api/user/signup', (req, res) => {
     mysqlConnetor();
-    // Kullanıcının gönderdiği verileri alın
     const {name, lastname, email, username, userbio, password, profilephoto, twofactor, status} = req.body;
-    // Kullanıcının verilerini veritabanına ekleme
+
     connection.query(
         'INSERT INTO users (name, lastname, email, username, userbio, password, profilephoto, twofactor, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [name, lastname, email, username, userbio, password, profilephoto, twofactor, status],
         (err, results) => {
@@ -59,6 +58,7 @@ app.post('/api/user/signup', (req, res) => {
 });
 
 app.post('/api/user/login', (req, res) => {
+    mysqlConnetor();
     const {email, password} = req.body;
 
     connection.query(
@@ -82,10 +82,11 @@ app.post('/api/user/login', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/user/login/google', (req, res) => {
-    // Kullanıcının gönderdiği verileri alın
+    mysqlConnetor();
     const {email} = req.body;
 
     // Kullanıcının verilerini veritabanında arama
@@ -116,9 +117,11 @@ app.post('/api/user/login/google', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/user/deleteuser', (req, res) => {
+    mysqlConnetor();
     const {username, password} = req.body;
 
     connection.query(
@@ -136,9 +139,11 @@ app.post('/api/user/deleteuser', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.put('/api/user/changepassword', (req, res) => {
+    mysqlConnetor();
     const {username, password, newpassword} = req.body;
 
     connection.query(
@@ -156,10 +161,12 @@ app.put('/api/user/changepassword', (req, res) => {
                 res.status(200).send('User password updated.');
             }
         }
-    )
+    );
+    connection.end();
 });
 
 app.post('/api/user/forgotpassword', (req, res) => {
+    mysqlConnetor();
     const {username, email} = req.body;
 
     connection.query(
@@ -181,9 +188,11 @@ app.post('/api/user/forgotpassword', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.put('/api/user/createpassword', (req, res) => {
+    mysqlConnetor();
     const {username, newPassword} = req.body;
 
     connection.query(
@@ -202,12 +211,13 @@ app.put('/api/user/createpassword', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/user/twofactoractive', (req, res) => {
-// Kullanıcının gönderdiği verileri alın
+    mysqlConnetor();
     const {username, password} = req.body;
-    // Kullanıcının verilerini veritabanında arama ve durumunu 0 olarak güncelleme
+
     connection.query(
         'UPDATE users SET twofactor = 1 WHERE username = ? AND password = ?', [username, password],
         (err, results) => {
@@ -226,13 +236,13 @@ app.post('/api/user/twofactoractive', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/user/twofactordeactive', (req, res) => {
-    // Kullanıcının gönderdiği verileri alın
+    mysqlConnetor();
     const {username, password} = req.body;
 
-    // Kullanıcının verilerini veritabanında arama ve twofactor değerini 0 olarak güncelleme
     connection.query(
         'UPDATE users SET twofactor = 0 WHERE username = ? AND password = ?',
         [username, password],
@@ -249,9 +259,11 @@ app.post('/api/user/twofactordeactive', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/user/finduserid', (req, res) => {
+    mysqlConnetor();
     const {email} = req.body;
 
     connection.query(
@@ -270,9 +282,11 @@ app.post('/api/user/finduserid', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/user/usernametoemail', (req, res) => {
+    mysqlConnetor();
     const {username} = req.body;
     connection.query(
         'SELECT email FROM users WHERE username = ?', [username],
@@ -291,9 +305,11 @@ app.post('/api/user/usernametoemail', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/user/emailtousername', (req, res) => {
+    mysqlConnetor();
     const {email} = req.body;
 
     connection.query(
@@ -313,9 +329,11 @@ app.post('/api/user/emailtousername', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.get('/api/user/get', (req, res) => {
+    mysqlConnetor();
     const userId = req.query.userid; //çalışıyorsa dokunma
 
     connection.query(
@@ -324,16 +342,17 @@ app.get('/api/user/get', (req, res) => {
         (err, results) => {
             if (err) {
                 console.error('MySQL sorgu hatası:', err);
-                res.status(500).json({ error: 'Veritabanında bir hata oluştu.' });
+                res.status(500).json({error: 'Veritabanında bir hata oluştu.'});
             } else if (results.length === 0) {
                 console.log('No user found with provided userid.');
-                res.status(404).json({ error: 'Geçersiz userid.' });
+                res.status(404).json({error: 'Geçersiz userid.'});
             } else {
                 console.log('Retrieved records:', results);
                 res.status(200).json(results[0]); // İlk kaydı döndür
             }
         }
     );
+    connection.end();
 });
 
 const storageUser = multer.diskStorage({
@@ -348,16 +367,16 @@ const storageUser = multer.diskStorage({
         cb(null, modifiedFileName);
     }
 });
-const uploadUser = multer({ storage: storageUser }).single('photo'); // "photo" alan adını uygun şekilde değiştirin
+const uploadUser = multer({storage: storageUser}).single('photo'); // "photo" alan adını uygun şekilde değiştirin
 
 app.post('/api/user/upload', (req, res) => {
     uploadUser(req, res, (err) => {
         if (err) {
             console.log('Error uploading profile photo:', err);
-            res.status(400).json({ success: false, message: 'Fotoğraf yüklenemedi.' });
+            res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
         } else {
             const imageUrl = `https://projechats.com/projechat/uploads/user/profile/${req.file.filename}`;
-            res.json({ success: true, imageUrl: imageUrl });
+            res.json({success: true, imageUrl: imageUrl});
         }
     });
 });
@@ -387,6 +406,7 @@ app.post('/api/user/delete/profile', (req, res) => {
 });
 
 app.post('/api/user/update', (req, res) => {
+    mysqlConnetor();
     const {userid, username, userbio, profilephoto} = req.body;
 
     connection.query(
@@ -422,6 +442,7 @@ app.post('/api/user/update', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 //---------------------------------------------------------chat---------------------------------------------------------
@@ -479,6 +500,7 @@ app.post('/api/chat/delete/header', (req, res) => {
 });
 
 app.post('/api/chat/update', (req, res) => {
+    mysqlConnetor();
     const {groupName, groupname, groupdes, groupphoto} = req.body;
 
     // Veritabanında chati bul
@@ -517,9 +539,11 @@ app.post('/api/chat/update', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/chat/newchat', (req, res) => {
+    mysqlConnetor();
     const {adminid, groupphoto, groupname, groupdes} = req.body;
 
     // Adminin mevcut sohbet sayısını kontrol et
@@ -560,9 +584,11 @@ app.post('/api/chat/newchat', (req, res) => {
             );
         }
     );
+    connection.end();
 });
 
 app.post('/api/chat/groupnametogroupid', (req, res) => {
+    mysqlConnetor();
     const {groupname} = req.body;
 
     connection.query(
@@ -580,10 +606,12 @@ app.post('/api/chat/groupnametogroupid', (req, res) => {
                 }
             }
         }
-    )
+    );
+    connection.end();
 });
 
 app.post('/api/chat/delete', (req, res) => {
+    mysqlConnetor();
     const {groupname, adminid} = req.body;
 
     connection.query(
@@ -602,9 +630,11 @@ app.post('/api/chat/delete', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.get('/api/chat/get', (req, res) => {
+    mysqlConnetor();
     const adminId = req.query.adminid; //çalışıyorsa dokunma
 
     connection.query(
@@ -620,9 +650,11 @@ app.get('/api/chat/get', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.get('/api/chat/get/all', (req, res) => {
+    mysqlConnetor();
     connection.query(
         'SELECT * FROM chats',
         (err, results) => {
@@ -635,9 +667,11 @@ app.get('/api/chat/get/all', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.get('/api/chat/get/id', (req, res) => {
+    mysqlConnetor();
     const groupId = req.query.groupid; //çalışıyorsa dokunma
 
     connection.query(
@@ -653,9 +687,11 @@ app.get('/api/chat/get/id', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.get('/api/chat/chat-messages', (req, res) => {
+    mysqlConnetor();
     const page = parseInt(req.query.page) || 1; // Sayfa numarasını al
     const pageSize = parseInt(req.query.pageSize) || 10; // Sayfa boyutunu al
     const startIndex = (page - 1) * pageSize;
@@ -672,9 +708,11 @@ app.get('/api/chat/chat-messages', (req, res) => {
             res.status(200).send(results);
         }
     });
+    connection.end();
 });
 
 app.post('/api/chat/newmessage', (req, res) => {
+    mysqlConnetor();
     const {groupId, senderid, content, timestamp} = req.body;
 
     connection.query(
@@ -693,6 +731,7 @@ app.post('/api/chat/newmessage', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 // Server'ı başlatma
