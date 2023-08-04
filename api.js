@@ -18,17 +18,20 @@ const connection = mysql.createConnection({
     password: 'L6P]hm6(3cSOd9',
     database: 'projech1_data'
 });
+function mysqlConnetor() {
+    connection.connect((err) => {
+        if (err) {
+            console.log('Error connecting to MySQL:', err);
+        } else {
+            console.log('Connected to MySQL database.');
+        }
+    });
+}
 
-connection.connect((err) => {
-    if (err) {
-        console.log('Error connecting to MySQL:', err);
-    } else {
-        console.log('Connected to MySQL database.');
-    }
-});
 
 //---------------------------------------------------------user---------------------------------------------------------
 app.post('/api/user/signup', (req, res) => {
+    mysqlConnetor();
     // Kullanıcının gönderdiği verileri alın
     const {name, lastname, email, username, userbio, password, profilephoto, twofactor, status} = req.body;
     // Kullanıcının verilerini veritabanına ekleme
@@ -52,6 +55,7 @@ app.post('/api/user/signup', (req, res) => {
             }
         }
     );
+    connection.end();
 });
 
 app.post('/api/user/login', (req, res) => {
