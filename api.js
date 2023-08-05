@@ -714,7 +714,7 @@ app.post('/api/chat/newmessage', (req, res) => {
     const {groupId, senderid, content, timestamp} = req.body;
 
     connection.query(
-        'INSERT INTO chatmessages (groupid, senderid, content, timestamp) VALUES (?, ?, ?, ?)',
+        'INSERT INTO chat-messages (groupid, senderid, content, timestamp) VALUES (?, ?, ?, ?)',
         [groupId, senderid, content, timestamp],
         (err, results) => {
             if (err) {
