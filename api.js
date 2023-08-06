@@ -444,32 +444,27 @@ app.post('/api/user/update', (req, res) => {
 });
 
 //---------------------------------------------------------chat---------------------------------------------------------
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const targetDirectory = 'uploads/chat/header'; // Klasörün hedef dizini
-
-        // Klasörü oluştur (varsa tekrar oluşturulmayacak)
-        fs.mkdirSync(targetDirectory, {recursive: true});
-
-        cb(null, targetDirectory);
-    },
-    filename: (req, file, cb) => {
-        const uniqueId = crypto.randomBytes(4).toString('hex');
-        const modifiedFileName = `PCT_${uniqueId}_${file.originalname}`;
-
-        cb(null, modifiedFileName);
-    }
+const upload = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+            const targetDirectory = 'uploads/chat/header';
+            fs.mkdirSync(targetDirectory, { recursive: true });
+            cb(null, targetDirectory);
+        },
+        filename: (req, file, cb) => {
+            const uniqueId = crypto.randomBytes(4).toString('hex');
+            const modifiedFileName = `PCT_${uniqueId}_${file.originalname}`;
+            cb(null, modifiedFileName);
+        },
+    }),
 });
-const upload = multer({storage});
 
 app.post('/api/chat/upload', upload.single('photo'), (req, res) => {
     if (req.file) {
-        // Fotoğraf başarıyla yüklendi
         const imageUrl = `https://projechats.com/projechat/uploads/chat/header/${req.file.filename}`;
-        res.json({success: true, imageUrl: imageUrl});
+        res.json({ success: true, imageUrl: imageUrl });
     } else {
-        // Fotoğraf yüklenemedi
-        res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
+        res.status(400).json({ success: false, message: 'Fotoğraf yüklenemedi.' });
     }
 });
 
