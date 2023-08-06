@@ -373,7 +373,7 @@ app.post('/api/user/upload', (req, res) => {
             console.log('Error uploading profile photo:', err);
             res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
         } else {
-            const imageUrl = `https://projechats.com/projechat/uploads/user/profile/${req.file.filename}`;
+            const imageUrl = `http://23.26.248.43:5000/projechat/uploads/user/profile/${req.file.filename}`;
             res.json({success: true, imageUrl: imageUrl});
         }
     });
@@ -465,7 +465,7 @@ const upload = multer({storage});
 app.post('/api/chat/upload', upload.single('photo'), (req, res) => {
     if (req.file) {
         // Fotoğraf başarıyla yüklendi
-        const imageUrl = `http://23.26.248.43:5000/projechat/uploads/chat/header/${req.file.filename}`;
+        const imageUrl = `https://projechats.com/projechat/uploads/chat/header/${req.file.filename}`;
         res.json({success: true, imageUrl: imageUrl});
     } else {
         // Fotoğraf yüklenemedi
