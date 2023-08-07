@@ -446,7 +446,7 @@ app.post('/api/user/update', (req, res) => {
 //---------------------------------------------------------chat---------------------------------------------------------
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const targetDirectory = 'uploads/chat/header'; // Klasörün hedef dizini
+        const targetDirectory = '/var/www/html/uploads/chat/header'; // Klasörün hedef dizini
 
         // Klasörü oluştur (varsa tekrar oluşturulmayacak)
         fs.mkdirSync(targetDirectory, {recursive: true});
@@ -480,7 +480,7 @@ app.post('/api/chat/delete/header', (req, res) => {
     const fileName = fileUrl.split('/').pop();
 
     // Dosyanın bulunduğu dizin
-    const targetDirectory = 'uploads/chat/header';
+    const targetDirectory = '/var/www/html/uploads/chat/header';
 
     // Dosya yolunu oluşturun
     const filePath = `${targetDirectory}/${fileName}`;
