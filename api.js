@@ -355,7 +355,7 @@ app.get('/api/user/get', (req, res) => {
 
 const storageUser = multer.diskStorage({
     destination: (req, file, cb) => {
-        const targetDirectory = 'uploads/user/profile';
+        const targetDirectory = '/var/www/html/uploads/user/profile'; //uploads/user/profile
         fs.mkdirSync(targetDirectory, {recursive: true});
         cb(null, targetDirectory);
     },
@@ -386,7 +386,7 @@ app.post('/api/user/delete/profile', (req, res) => {
     const fileName = fileUrl.split('/').pop();
 
     // Dosyanın bulunduğu dizin
-    const targetDirectory = 'uploads/user/profile';
+    const targetDirectory = '/var/www/html/uploads/user/profile';
 
     // Dosya yolunu oluşturun
     const filePathUser = `${targetDirectory}/${fileName}`;
