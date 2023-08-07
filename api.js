@@ -465,7 +465,7 @@ const upload = multer({storage});
 app.post('/api/chat/upload', upload.single('photo'), (req, res) => {
     if (req.file) {
         // Fotoğraf başarıyla yüklendi
-        const imageUrl = `https://projechats.com/projechat/uploads/chat/header/${req.file.filename}`;
+        const imageUrl = `http://23.26.248.43/uploads/chat/header/${req.file.filename}`;
         res.json({success: true, imageUrl: imageUrl});
     } else {
         // Fotoğraf yüklenemedi
