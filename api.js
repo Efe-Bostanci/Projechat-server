@@ -28,6 +28,96 @@ connection.connect((err) => {
 });
 
 //---------------------------------------------------------user---------------------------------------------------------
+const storageUser = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const targetDirectory = '/var/www/html/uploads/user/profile'; //uploads/user/profile
+        fs.mkdirSync(targetDirectory, {recursive: true});
+        cb(null, targetDirectory);
+    },
+    filename: (req, file, cb) => {
+        const uniqueId = crypto.randomBytes(4).toString('hex');
+        const modifiedFileName = `PCT_${uniqueId}_${file.originalname}`;
+        cb(null, modifiedFileName);
+    }
+});
+const uploadUser = multer({storage: storageUser}).single('photo'); // "photo" alan adını uygun şekilde değiştirin
+
+app.post('/api/user/upload', (req, res) => {
+    uploadUser(req, res, (err) => {
+        if (err) {
+            console.log('Error uploading profile photo:', err);
+            res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
+        } else {
+            const imageUrl = `http://23.26.248.43/uploads/user/profile/${req.file.filename}`;
+            res.json({success: true, imageUrl: imageUrl});
+        }
+    });
+});
+
+app.post('/api/user/delete/profile', (req, res) => {
+    const {fileUrl} = req.body;
+
+    // Dosya adını ayıklayarak dosyanın adını elde edin
+    const fileName = fileUrl.split('/').pop();
+
+    // Dosyanın bulunduğu dizin
+    const targetDirectory = '/var/www/html/uploads/user/profile';
+
+    // Dosya yolunu oluşturun
+    const filePathUser = `${targetDirectory}/${fileName}`;
+
+    // Dosyayı sil
+    fs.unlink(filePathUser, (err) => {
+        if (err) {
+            console.log('Dosya silinirken bir hata oluştu:', err);
+            res.status(500).json({success: false, message: 'Dosya silinirken bir hata oluştu.'});
+        } else {
+            console.log('Dosya başarıyla silindi:', filePathUser);
+            res.json({success: true, message: 'Dosya başarıyla silindi.'});
+        }
+    });
+});
+
+app.post('/api/user/update', (req, res) => {
+
+    const {userid, username, userbio, profilephoto} = req.body;
+
+    connection.query(
+        'SELECT * FROM users WHERE userid = ?', [userid],
+        (err, results) => {
+            if (err) {
+                console.log('Error querying MySQL:', err);
+                res.status(500).send('Error querying database.');
+            } else if (results.length === 0) {
+                console.log('User with provided id not found.');
+                res.status(404).send(`User not found ${userid}.`);
+            } else {
+                const user = results[0];
+
+                // username, userbio veya profilephoto varsa güncelle
+                if (username) user.username = username;
+                if (userbio) user.userbio = userbio;
+                if (profilephoto) user.profilephoto = profilephoto;
+
+                connection.query(
+                    'UPDATE users SET username = ?, userbio = ?, profilephoto = ? WHERE userid = ?',// WHERE username
+                    [user.username, user.userbio, user.profilephoto, userid],
+                    (err, results) => {
+                        if (err) {
+                            console.log('Error updating user in MySQL:', err);
+                            res.status(500).send('Error updating user in database.');
+                        } else {
+                            console.log('User updated successfully.');
+                            res.status(200).send('User updated successfully.');
+                        }
+                    }
+                );
+            }
+        }
+    );
+
+});
+
 app.post('/api/user/signup', (req, res) => {
 
     const {name, lastname, email, username, userbio, password, profilephoto, twofactor, status} = req.body;
@@ -347,96 +437,6 @@ app.get('/api/user/get', (req, res) => {
             } else {
                 console.log('Retrieved records:', results);
                 res.status(200).json(results[0]); // İlk kaydı döndür
-            }
-        }
-    );
-
-});
-
-const storageUser = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const targetDirectory = '/var/www/html/uploads/user/profile'; //uploads/user/profile
-        fs.mkdirSync(targetDirectory, {recursive: true});
-        cb(null, targetDirectory);
-    },
-    filename: (req, file, cb) => {
-        const uniqueId = crypto.randomBytes(4).toString('hex');
-        const modifiedFileName = `PCT_${uniqueId}_${file.originalname}`;
-        cb(null, modifiedFileName);
-    }
-});
-const uploadUser = multer({storage: storageUser}).single('photo'); // "photo" alan adını uygun şekilde değiştirin
-
-app.post('/api/user/upload', (req, res) => {
-    uploadUser(req, res, (err) => {
-        if (err) {
-            console.log('Error uploading profile photo:', err);
-            res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
-        } else {
-            const imageUrl = `http://23.26.248.43/uploads/user/profile/${req.file.filename}`;
-            res.json({success: true, imageUrl: imageUrl});
-        }
-    });
-});
-
-app.post('/api/user/delete/profile', (req, res) => {
-    const {fileUrl} = req.body;
-
-    // Dosya adını ayıklayarak dosyanın adını elde edin
-    const fileName = fileUrl.split('/').pop();
-
-    // Dosyanın bulunduğu dizin
-    const targetDirectory = '/var/www/html/uploads/user/profile';
-
-    // Dosya yolunu oluşturun
-    const filePathUser = `${targetDirectory}/${fileName}`;
-
-    // Dosyayı sil
-    fs.unlink(filePathUser, (err) => {
-        if (err) {
-            console.log('Dosya silinirken bir hata oluştu:', err);
-            res.status(500).json({success: false, message: 'Dosya silinirken bir hata oluştu.'});
-        } else {
-            console.log('Dosya başarıyla silindi:', filePathUser);
-            res.json({success: true, message: 'Dosya başarıyla silindi.'});
-        }
-    });
-});
-
-app.post('/api/user/update', (req, res) => {
-
-    const {userid, username, userbio, profilephoto} = req.body;
-
-    connection.query(
-        'SELECT * FROM users WHERE userid = ?', [userid],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error querying database.');
-            } else if (results.length === 0) {
-                console.log('User with provided id not found.');
-                res.status(404).send(`User not found ${userid}.`);
-            } else {
-                const user = results[0];
-
-                // username, userbio veya profilephoto varsa güncelle
-                if (username) user.username = username;
-                if (userbio) user.userbio = userbio;
-                if (profilephoto) user.profilephoto = profilephoto;
-
-                connection.query(
-                    'UPDATE users SET username = ?, userbio = ?, profilephoto = ? WHERE userid = ?',// WHERE username
-                    [user.username, user.userbio, user.profilephoto, userid],
-                    (err, results) => {
-                        if (err) {
-                            console.log('Error updating user in MySQL:', err);
-                            res.status(500).send('Error updating user in database.');
-                        } else {
-                            console.log('User updated successfully.');
-                            res.status(200).send('User updated successfully.');
-                        }
-                    }
-                );
             }
         }
     );
