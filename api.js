@@ -585,6 +585,30 @@ app.post('/api/chat/newchat', (req, res) => {
 
 });
 
+app.post('/api/chat/color', (req, res) => {
+    const { groupcolor } = req.body;
+    const groupColor = parseInt(groupcolor);
+
+    if (isNaN(groupColor) || groupColor < 1 || groupColor > 5) {
+        res.status(400).send({ error: 'Invalid color value' });
+        return;
+    }
+
+    connection.query(
+        'UPDATE chats SET groupcolor = ?',
+        [groupColor],
+        (err, results) => {
+            if (err) {
+                console.log('Error:', err);
+                res.status(500).send({ error: 'Internal Server Error: Please try again later.' });
+            } else {
+                console.log('Group color updated:', results);
+                res.status(200).send({ message: 'Group color updated successfully' });
+            }
+        }
+    );
+});
+
 app.post('/api/chat/groupnametogroupid', (req, res) => {
 
     const {groupname} = req.body;
