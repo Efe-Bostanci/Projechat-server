@@ -444,9 +444,8 @@ app.get('/api/user/get', (req, res) => {
 });
 
 app.get('/api/user/get/all', (req, res) => {
-
     connection.query(
-        'SELECT * FROM users',
+        'SELECT userid, username, userbio, profilephoto FROM users',
         (err, results) => {
             if (err) {
                 console.error('Error retrieving records:', err);
@@ -457,7 +456,6 @@ app.get('/api/user/get/all', (req, res) => {
             }
         }
     );
-
 });
 
 //---------------------------------------------------------chat---------------------------------------------------------
