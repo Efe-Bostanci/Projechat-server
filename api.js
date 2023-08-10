@@ -443,6 +443,23 @@ app.get('/api/user/get', (req, res) => {
 
 });
 
+app.get('/api/user/get/all', (req, res) => {
+
+    connection.query(
+        'SELECT * FROM users',
+        (err, results) => {
+            if (err) {
+                console.error('Error retrieving records:', err);
+                res.status(500).send('Error retrieving records');
+            } else {
+                console.log('Retrieved records:', results);
+                res.status(200).send(results);
+            }
+        }
+    );
+
+});
+
 //---------------------------------------------------------chat---------------------------------------------------------
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
