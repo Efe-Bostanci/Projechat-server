@@ -601,11 +601,11 @@ app.post('/api/chat/newchat', (req, res) => {
 });
 
 app.post('/api/chat/color', (req, res) => {
-    const { groupcolor } = req.body;
+    const {groupcolor} = req.body;
     const groupColor = parseInt(groupcolor);
 
     if (isNaN(groupColor) || groupColor < 1 || groupColor > 5) {
-        res.status(400).send({ error: 'Invalid color value' });
+        res.status(400).send({error: 'Invalid color value'});
         return;
     }
 
@@ -615,10 +615,10 @@ app.post('/api/chat/color', (req, res) => {
         (err, results) => {
             if (err) {
                 console.log('Error:', err);
-                res.status(500).send({ error: 'Internal Server Error: Please try again later.' });
+                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
             } else {
                 console.log('Group color updated:', results);
-                res.status(200).send({ message: 'Group color updated successfully' });
+                res.status(200).send({message: 'Group color updated successfully'});
             }
         }
     );
@@ -773,7 +773,7 @@ app.post('/api/chat/newmessage', (req, res) => {
 
 //-----------------------------------------------------interaction------------------------------------------------------
 app.post('/api/int/follow', (req, res) => {
-    const { followerid, followedid  } = req.body;
+    const {followerid, followedid} = req.body;
 
     connection.query(
         'INSERT INTO follow (followerid, followedid) VALUES (?, ?)',
@@ -781,7 +781,10 @@ app.post('/api/int/follow', (req, res) => {
         (err, results) => {
             if (err) {
                 console.error('MySQL query error:', err);
-                res.status(500).send({ error: 'Internal Server Error: Please try again later.' });
+                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+            } else if (results.affectedRows === 0) {
+                console.error('No rows were affected. Check your input data.');
+                res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
             } else {
                 console.log('Inserted into MySQL:', results);
                 res.status(200).send();
