@@ -771,6 +771,26 @@ app.post('/api/chat/newmessage', (req, res) => {
 
 });
 
+//-----------------------------------------------------interaction------------------------------------------------------
+app.post('/api/int/follow', (req, res) => {
+    const { followedid, followerid } = req.body;
+
+    const query = 'INSERT INTO follow (followedid, followerid) VALUES (?, ?)';
+
+    connection.query(
+        query, [followedid, followerid],
+        (err, results) => {
+            if (err) {
+                console.error('MySQL query error:', err);
+                res.status(500).send({ error: 'Internal Server Error: Please try again later.' });
+            } else {
+                console.log('Inserted into MySQL:', results);
+                res.status(200).send();
+            }
+        }
+    );
+});
+
 // Server'ı başlatma
 app.listen(port, () => {
     console.log(`Server started on port ${port}.`);
