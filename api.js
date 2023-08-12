@@ -735,7 +735,7 @@ app.get('/api/chat/chat-messages', (req, res) => {
     const endIndex = page * pageSize;
 
     // Chats tablosundan belirtilen alanları sorgula ve sayfalı olarak döndür
-    const query = 'SELECT groupphoto, groupid, groupname, groupdes FROM chats LIMIT ?, ?';
+    const query = 'SELECT groupphoto, groupid, groupname, groupdes FROM chat_messages LIMIT ?, ?';
     connection.query(query, [startIndex, pageSize], (err, results) => {
         if (err) {
             console.error('MySQL query error:', err);
