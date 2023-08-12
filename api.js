@@ -771,8 +771,8 @@ app.post('/api/chat/newmessage', (req, res) => {
 
 });
 
-//-----------------------------------------------------interaction------------------------------------------------------
-app.post('/api/int/follow', (req, res) => {
+//--------------------------------------------------------follow--------------------------------------------------------
+app.post('/api/follow/add', (req, res) => {
     const {followerid, followedid} = req.body;
 
     connection.query(
