@@ -773,11 +773,11 @@ app.post('/api/chat/newmessage', (req, res) => {
 
 //-----------------------------------------------------interaction------------------------------------------------------
 app.post('/api/int/follow', (req, res) => {
-    const {followerid, followedid} = req.body;
+    const {followerId, followedId} = req.body;
 
     connection.query(
-        'INSERT INTO follow (followerid, followedid) VALUES (?, ?)',
-        [followerid, followedid],
+        'INSERT INTO follow (followerId, followedId) VALUES (?, ?)',
+        [followerId, followedId],
         (err, results) => {
             if (err) {
                 console.error('MySQL query error:', err);
