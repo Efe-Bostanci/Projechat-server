@@ -776,7 +776,7 @@ app.post('/api/int/follow', (req, res) => {
     const {followerid, followedid} = req.body;
 
     connection.query(
-        'INSERT INTO follow (followid, followerid, followedid) VALUES (0, ?, ?)',
+        'INSERT INTO follow (followerid, followedid) VALUES (?, ?)',
         [followerid, followedid],
         (err, results) => {
             if (err) {
