@@ -438,6 +438,8 @@ app.get('/api/user/get', (req, res) => {
                 console.log('Retrieved records:', results);
                 res.status(200).json(results[0]); // İlk kaydı döndür
             }
+
+            return res.json(results);
         }
     );
 
