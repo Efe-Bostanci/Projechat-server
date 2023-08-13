@@ -125,7 +125,7 @@ app.post('/api/user/update', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/signup', (req, res) => {
@@ -152,7 +152,7 @@ app.post('/api/user/signup', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/login', (req, res) => {
@@ -180,7 +180,7 @@ app.post('/api/user/login', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/login/google', (req, res) => {
@@ -215,7 +215,7 @@ app.post('/api/user/login/google', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/deleteuser', (req, res) => {
@@ -237,7 +237,7 @@ app.post('/api/user/deleteuser', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.put('/api/user/changepassword', (req, res) => {
@@ -260,7 +260,7 @@ app.put('/api/user/changepassword', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/forgotpassword', (req, res) => {
@@ -286,7 +286,7 @@ app.post('/api/user/forgotpassword', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.put('/api/user/createpassword', (req, res) => {
@@ -309,7 +309,7 @@ app.put('/api/user/createpassword', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/twofactoractive', (req, res) => {
@@ -334,7 +334,7 @@ app.post('/api/user/twofactoractive', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/twofactordeactive', (req, res) => {
@@ -357,7 +357,7 @@ app.post('/api/user/twofactordeactive', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/finduserid', (req, res) => {
@@ -380,7 +380,7 @@ app.post('/api/user/finduserid', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/usernametoemail', (req, res) => {
@@ -403,7 +403,7 @@ app.post('/api/user/usernametoemail', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/user/emailtousername', (req, res) => {
@@ -427,7 +427,7 @@ app.post('/api/user/emailtousername', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.get('/api/user/get', (req, res) => {
@@ -450,7 +450,7 @@ app.get('/api/user/get', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.get('/api/user/get/all', (req, res) => {
@@ -466,7 +466,7 @@ app.get('/api/user/get/all', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 //---------------------------------------------------------chat---------------------------------------------------------
@@ -563,7 +563,7 @@ app.post('/api/chat/update', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/chat/newchat', (req, res) => {
@@ -608,7 +608,7 @@ app.post('/api/chat/newchat', (req, res) => {
             );
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/chat/color', (req, res) => {
@@ -633,7 +633,7 @@ app.post('/api/chat/color', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/chat/groupnametogroupid', (req, res) => {
@@ -656,7 +656,7 @@ app.post('/api/chat/groupnametogroupid', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/chat/delete', (req, res) => {
@@ -679,7 +679,7 @@ app.post('/api/chat/delete', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.get('/api/chat/get', (req, res) => {
@@ -699,7 +699,7 @@ app.get('/api/chat/get', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.get('/api/chat/get/all', (req, res) => {
@@ -716,7 +716,7 @@ app.get('/api/chat/get/all', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.get('/api/chat/get/id', (req, res) => {
@@ -736,7 +736,7 @@ app.get('/api/chat/get/id', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 app.get('/api/chat/chat-messages', (req, res) => {
@@ -757,7 +757,7 @@ app.get('/api/chat/chat-messages', (req, res) => {
             res.status(200).send(results);
         }
     });
-    closeConnection();
+    //closeConnection();
 });
 
 app.post('/api/chat/newmessage', (req, res) => {
@@ -780,7 +780,7 @@ app.post('/api/chat/newmessage', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 //--------------------------------------------------------follow--------------------------------------------------------
@@ -803,7 +803,7 @@ app.post('/api/follow/add', (req, res) => {
             }
         }
     );
-    closeConnection();
+    //closeConnection();
 });
 
 // Server'ı başlatma
@@ -813,6 +813,6 @@ app.listen(port, () => {
 
 process.on('SIGINT', () => {
     console.log('Closing server...');
-    closeConnection();
+    //closeConnection();
     process.exit();
 });
