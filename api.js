@@ -105,19 +105,21 @@ app.post('/api/user/update', (req, res) => {
                     if (userbio) user.userbio = userbio;
                     if (profilephoto) user.profilephoto = profilephoto;
 
-                    connection.query(
-                        'UPDATE users SET username = ?, userbio = ?, profilephoto = ? WHERE userid = ?',// WHERE username
-                        [user.username, user.userbio, user.profilephoto, userid],
-                        (err, results) => {
-                            if (err) {
-                                console.log('Error updating user in MySQL:', err);
-                                res.status(500).send('Error updating user in database.');
-                            } else {
-                                console.log('User updated successfully.');
-                                res.status(200).send('User updated successfully.');
+                    getConnectionAndExecute(req, res, (connection) => {
+                        connection.query(
+                            'UPDATE users SET username = ?, userbio = ?, profilephoto = ? WHERE userid = ?',// WHERE username
+                            [user.username, user.userbio, user.profilephoto, userid],
+                            (err, results) => {
+                                if (err) {
+                                    console.log('Error updating user in MySQL:', err);
+                                    res.status(500).send('Error updating user in database.');
+                                } else {
+                                    console.log('User updated successfully.');
+                                    res.status(200).send('User updated successfully.');
+                                }
                             }
-                        }
-                    );
+                        );
+                    });
                 }
             }
         );
@@ -450,8 +452,8 @@ app.get('/api/user/get', (req, res) => {
 });
 
 app.get('/api/user/get/all', (req, res) => {
-    getConnectionAndExecute(req, res, (connection) => {
 
+    getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'SELECT userid, username, userbio, profilephoto FROM users',
             (err, results) => {
@@ -543,20 +545,21 @@ app.post('/api/chat/update', (req, res) => {
                     if (groupdes) chat.groupdes = groupdes;
                     if (groupphoto) chat.groupphoto = groupphoto;
 
-                    // Güncellenmiş chati veritabanında güncelle
-                    connection.query(
-                        'UPDATE chats SET groupname = ?, groupdes = ?, groupphoto = ? WHERE groupname = ?',
-                        [chat.groupname, chat.groupdes, chat.groupphoto, groupName],
-                        (err, results) => {
-                            if (err) {
-                                console.log('Error updating chat in MySQL:', err);
-                                res.status(500).send('Error updating chat in database.');
-                            } else {
-                                console.log('Chat updated successfully.');
-                                res.status(200).send('Chat updated successfully.');
+                    getConnectionAndExecute(req, res, (connection) => {
+                        connection.query(
+                            'UPDATE chats SET groupname = ?, groupdes = ?, groupphoto = ? WHERE groupname = ?',
+                            [chat.groupname, chat.groupdes, chat.groupphoto, groupName],
+                            (err, results) => {
+                                if (err) {
+                                    console.log('Error updating chat in MySQL:', err);
+                                    res.status(500).send('Error updating chat in database.');
+                                } else {
+                                    console.log('Chat updated successfully.');
+                                    res.status(200).send('Chat updated successfully.');
+                                }
                             }
-                        }
-                    );
+                        );
+                    });
                 }
             }
         );
@@ -584,24 +587,26 @@ app.post('/api/chat/newchat', (req, res) => {
                     return;
                 }
 
-                connection.query(
-                    'INSERT INTO chats (adminid, groupphoto, groupname, groupdes) VALUES (?, ?, ?, ?)',
-                    [adminid, groupphoto, groupname, groupdes],
-                    (err, results) => {
-                        if (err) {
-                            if (err.code === 'ER_DUP_ENTRY') {
-                                console.log(`Group already exists with name ${groupname}.`);
-                                res.status(409).send({error: 'Conflict: Group already exists with this name.'});
+                getConnectionAndExecute(req, res, (connection) => {
+                    connection.query(
+                        'INSERT INTO chats (adminid, groupphoto, groupname, groupdes) VALUES (?, ?, ?, ?)',
+                        [adminid, groupphoto, groupname, groupdes],
+                        (err, results) => {
+                            if (err) {
+                                if (err.code === 'ER_DUP_ENTRY') {
+                                    console.log(`Group already exists with name ${groupname}.`);
+                                    res.status(409).send({error: 'Conflict: Group already exists with this name.'});
+                                } else {
+                                    console.error('Error inserting record:', err);
+                                    res.status(500).send('Error inserting record');
+                                }
                             } else {
-                                console.error('Error inserting record:', err);
-                                res.status(500).send('Error inserting record');
+                                console.log('Inserted into MySQL:', results);
+                                res.status(200).send('Record inserted successfully');
                             }
-                        } else {
-                            console.log('Inserted into MySQL:', results);
-                            res.status(200).send('Record inserted successfully');
                         }
-                    }
-                );
+                    );
+                });
             }
         );
     });
@@ -701,105 +706,108 @@ app.get('/api/chat/get', (req, res) => {
 
 app.get('/api/chat/get/all', (req, res) => {
 
-    connection.query(
-        'SELECT * FROM chats',
-        (err, results) => {
-            if (err) {
-                console.error('Error retrieving records:', err);
-                res.status(500).send('Error retrieving records');
-            } else {
-                console.log('Retrieved records:', results);
-                res.status(200).send(results);
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM chats',
+            (err, results) => {
+                if (err) {
+                    console.error('Error retrieving records:', err);
+                    res.status(500).send('Error retrieving records');
+                } else {
+                    console.log('Retrieved records:', results);
+                    res.status(200).send(results);
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.get('/api/chat/get/id', (req, res) => {
-
     const groupId = req.query.groupid; //çalışıyorsa dokunma
 
-    connection.query(
-        'SELECT * FROM chats WHERE groupid = ?',
-        [groupId],
-        (err, results) => {
-            if (err) {
-                console.error('Error retrieving records:', err);
-                res.status(500).send('Error retrieving records');
-            } else {
-                console.log('Retrieved records:', results);
-                res.status(200).send(results);
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM chats WHERE groupid = ?',
+            [groupId],
+            (err, results) => {
+                if (err) {
+                    console.error('Error retrieving records:', err);
+                    res.status(500).send('Error retrieving records');
+                } else {
+                    console.log('Retrieved records:', results);
+                    res.status(200).send(results);
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.get('/api/chat/chat-messages', (req, res) => {
-
     const page = parseInt(req.query.page) || 1; // Sayfa numarasını al
     const pageSize = parseInt(req.query.pageSize) || 10; // Sayfa boyutunu al
     const startIndex = (page - 1) * pageSize;
     const endIndex = page * pageSize;
 
-    // Chats tablosundan belirtilen alanları sorgula ve sayfalı olarak döndür
     const query = 'SELECT id, groupid, senderid, content, timestamp FROM chat_messages ORDER BY timestamp DESC LIMIT ?, ?';
-    connection.query(query, [startIndex, pageSize], (err, results) => {
-        if (err) {
-            console.error('MySQL query error:', err);
-            res.status(500).send({error: 'Internal Server Error: Please try again later.'});
-        } else {
-            console.log('Chat messages retrieved from MySQL:', results);
-            res.status(200).send(results);
-        }
-    });
 
-});
-
-app.post('/api/chat/newmessage', (req, res) => {
-
-    const {groupId, senderid, content, timestamp} = req.body;
-
-    connection.query(
-        'INSERT INTO chat_messages (groupid, senderid, content, timestamp) VALUES (?, ?, ?, ?)',
-        [groupId, senderid, content, timestamp],
-        (err, results) => {
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(query, [startIndex, pageSize], (err, results) => {
             if (err) {
                 console.error('MySQL query error:', err);
                 res.status(500).send({error: 'Internal Server Error: Please try again later.'});
-            } else if (results.affectedRows === 0) {
-                console.error('No rows were affected. Check your input data.');
-                res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
             } else {
-                console.log('New chat message added to MySQL:', results);
-                res.status(200).send({message: 'New chat message successfully added.'});
+                console.log('Chat messages retrieved from MySQL:', results);
+                res.status(200).send(results);
             }
-        }
-    );
+        });
+    });
+});
 
+app.post('/api/chat/newmessage', (req, res) => {
+    const {groupId, senderid, content, timestamp} = req.body;
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'INSERT INTO chat_messages (groupid, senderid, content, timestamp) VALUES (?, ?, ?, ?)',
+            [groupId, senderid, content, timestamp],
+            (err, results) => {
+                if (err) {
+                    console.error('MySQL query error:', err);
+                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                } else if (results.affectedRows === 0) {
+                    console.error('No rows were affected. Check your input data.');
+                    res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
+                } else {
+                    console.log('New chat message added to MySQL:', results);
+                    res.status(200).send({message: 'New chat message successfully added.'});
+                }
+            }
+        );
+    });
 });
 
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
     const {followerid, followedid} = req.body;
 
-    connection.query(
-        'INSERT INTO follow (followerid, followedid) VALUES (?, ?)',
-        [followerid, followedid],
-        (err, results) => {
-            if (err) {
-                console.error('MySQL query error:', err);
-                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
-            } else if (results.affectedRows === 0) {
-                console.error('No rows were affected. Check your input data.');
-                res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
-            } else {
-                console.log('Inserted into MySQL:', results);
-                res.status(200).send();
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'INSERT INTO follow (followerid, followedid) VALUES (?, ?)',
+            [followerid, followedid],
+            (err, results) => {
+                if (err) {
+                    console.error('MySQL query error:', err);
+                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                } else if (results.affectedRows === 0) {
+                    console.error('No rows were affected. Check your input data.');
+                    res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
+                } else {
+                    console.log('Inserted into MySQL:', results);
+                    res.status(200).send();
+                }
             }
-        }
-    );
+        );
+    });
 });
 
 // Server'ı başlatma
