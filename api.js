@@ -85,7 +85,6 @@ app.post('/api/user/delete/profile', (req, res) => {
 });
 
 app.post('/api/user/update', (req, res) => {
-
     const {userid, username, userbio, profilephoto} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
@@ -153,160 +152,159 @@ app.post('/api/user/signup', (req, res) => {
 });
 
 app.post('/api/user/login', (req, res) => {
-
     const {email, password} = req.body;
 
-    connection.query(
-        'SELECT * FROM users WHERE email = ? AND password = ?', [email, password],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
-            } else if (results.length === 0) {
-                console.log('No user found with provided credentials.');
-                res.status(401).send({error: 'Unauthorized: Invalid email or password.'});
-            } else if (results[0].status === 0) {
-                console.log('User is either disabled or deleted.');
-                res.status(403).send({error: 'Unauthorized: This account is either disabled or deleted.'});
-            } else if (results[0].twofactor === 1) {
-                console.log('İki faktörlü doğrulama gerekiyor.');
-                res.status(200).send({twofactor: 1});
-            } else {
-                console.log('User found:', results[0]);
-                res.status(200).send(results);
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM users WHERE email = ? AND password = ?', [email, password],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                } else if (results.length === 0) {
+                    console.log('No user found with provided credentials.');
+                    res.status(401).send({error: 'Unauthorized: Invalid email or password.'});
+                } else if (results[0].status === 0) {
+                    console.log('User is either disabled or deleted.');
+                    res.status(403).send({error: 'Unauthorized: This account is either disabled or deleted.'});
+                } else if (results[0].twofactor === 1) {
+                    console.log('İki faktörlü doğrulama gerekiyor.');
+                    res.status(200).send({twofactor: 1});
+                } else {
+                    console.log('User found:', results[0]);
+                    res.status(200).send(results);
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/login/google', (req, res) => {
-
     const {email} = req.body;
 
-    // Kullanıcının verilerini veritabanında arama
-    connection.query(
-        'SELECT * FROM users WHERE email = ?',
-        [email],
-        (err, results) => {
-            if (err) {
-                console.log('MySQL sorgulama hatası:', err);
-                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
-            } else {
-                if (results.length === 0) {
-                    console.log('Sağlanan kimlik bilgileriyle hiçbir kullanıcı bulunamadı.');
-                    res.status(401).send({error: 'Unauthorized: Invalid email or password.'});
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM users WHERE email = ?',
+            [email],
+            (err, results) => {
+                if (err) {
+                    console.log('MySQL sorgulama hatası:', err);
+                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                 } else {
-                    const user = results[0];
-                    if (user.status === 0) {
-                        console.log('Kullanıcı devre dışı veya silinmiş durumda.');
-                        res.status(403).send({error: 'Unauthorized: This account is either disabled or deleted.'});
-                    } else if (user.twofactor === 1) {
-                        console.log('İki faktörlü doğrulama gerekiyor.');
-                        res.status(200).send({twofactor: 1});
+                    if (results.length === 0) {
+                        console.log('Sağlanan kimlik bilgileriyle hiçbir kullanıcı bulunamadı.');
+                        res.status(401).send({error: 'Unauthorized: Invalid email or password.'});
                     } else {
-                        console.log('Kullanıcı bulundu:', user);
-                        res.status(200).send(user);
+                        const user = results[0];
+                        if (user.status === 0) {
+                            console.log('Kullanıcı devre dışı veya silinmiş durumda.');
+                            res.status(403).send({error: 'Unauthorized: This account is either disabled or deleted.'});
+                        } else if (user.twofactor === 1) {
+                            console.log('İki faktörlü doğrulama gerekiyor.');
+                            res.status(200).send({twofactor: 1});
+                        } else {
+                            console.log('Kullanıcı bulundu:', user);
+                            res.status(200).send(user);
+                        }
                     }
                 }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/deleteuser', (req, res) => {
-
     const {username, password} = req.body;
 
-    connection.query(
-        'UPDATE users SET status = 0 WHERE username = ? AND password = ?', [username, password],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error updating user status in database.');
-            } else if (results.affectedRows === 0) {
-                console.log('No user found with provided credentials.');
-                res.status(401).send('Invalid username or password.');
-            } else {
-                console.log('User status updated:', results.affectedRows);
-                res.status(200).send('User status set to 0.');
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'UPDATE users SET status = 0 WHERE username = ? AND password = ?', [username, password],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send('Error updating user status in database.');
+                } else if (results.affectedRows === 0) {
+                    console.log('No user found with provided credentials.');
+                    res.status(401).send('Invalid username or password.');
+                } else {
+                    console.log('User status updated:', results.affectedRows);
+                    res.status(200).send('User status set to 0.');
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.put('/api/user/changepassword', (req, res) => {
-
     const {username, password, newpassword} = req.body;
 
-    connection.query(
-        'UPDATE users SET password = ? WHERE username = ? AND password = ?',
-        [newpassword, username, password],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error updating user password in database.');
-            } else if (results.affectedRows === 0) {
-                console.log('No user found with provided credentials.');
-                res.status(401).send('Invalid username or password.');
-            } else {
-                console.log('User password updated:', results.affectedRows);
-                res.status(200).send('User password updated.');
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'UPDATE users SET password = ? WHERE username = ? AND password = ?',
+            [newpassword, username, password],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send('Error updating user password in database.');
+                } else if (results.affectedRows === 0) {
+                    console.log('No user found with provided credentials.');
+                    res.status(401).send('Invalid username or password.');
+                } else {
+                    console.log('User password updated:', results.affectedRows);
+                    res.status(200).send('User password updated.');
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/forgotpassword', (req, res) => {
-
     const {username, email} = req.body;
 
-    connection.query(
-        'SELECT * FROM users WHERE username = ? AND email = ?',
-        [username, email],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error retrieving user information from database.');
-            } else if (results.length === 0) {
-                console.log('No user found with provided credentials.');
-                res.status(401).send('Invalid username or email.');
-            } else if (results[0].twofactor === 1) {
-                console.log('İki faktörlü doğrulama gerekiyor.');
-                res.status(200).send({twofactor: 1});
-            } else {
-                console.log('User found:', results[0]);
-                res.status(200).send('User information is correct.');
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM users WHERE username = ? AND email = ?',
+            [username, email],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send('Error retrieving user information from database.');
+                } else if (results.length === 0) {
+                    console.log('No user found with provided credentials.');
+                    res.status(401).send('Invalid username or email.');
+                } else if (results[0].twofactor === 1) {
+                    console.log('İki faktörlü doğrulama gerekiyor.');
+                    res.status(200).send({twofactor: 1});
+                } else {
+                    console.log('User found:', results[0]);
+                    res.status(200).send('User information is correct.');
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.put('/api/user/createpassword', (req, res) => {
-
     const {username, newPassword} = req.body;
 
-    connection.query(
-        'UPDATE users SET password = ? WHERE username = ?',
-        [newPassword, username],
-        (err, results) => {
-            if (err) {
-                console.log('Error updating password in the database:', err);
-                res.status(500).send('Error updating password.');
-            } else if (results.affectedRows === 0) {
-                console.log('No user found with provided username.');
-                res.status(401).send('Invalid username.');
-            } else {
-                console.log('Password updated successfully for user:', username);
-                res.status(200).send('Password updated successfully.');
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'UPDATE users SET password = ? WHERE username = ?',
+            [newPassword, username],
+            (err, results) => {
+                if (err) {
+                    console.log('Error updating password in the database:', err);
+                    res.status(500).send('Error updating password.');
+                } else if (results.affectedRows === 0) {
+                    console.log('No user found with provided username.');
+                    res.status(401).send('Invalid username.');
+                } else {
+                    console.log('Password updated successfully for user:', username);
+                    res.status(200).send('Password updated successfully.');
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/twofactoractive', (req, res) => {
