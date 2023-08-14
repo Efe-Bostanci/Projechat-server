@@ -832,6 +832,28 @@ app.post('/api/follow/remove', (req, res) => {
     });
 });
 
+app.post('/api/follow/get', (req, res) => {
+    const {username} = req.body;
+
+    getConnectionAndExecute(req, res, (connection) => {
+       connection.query(
+           'SELECT userid FROM users WHERE username = ?', [username],
+           (err, results) => {
+               if (err) {
+                   console.error(err);
+                   res.status(500).json({error: 'Server error'});
+               } else {
+                   if (results.length > 0) {
+                       const userid = results[0].userid;
+                       res.status(200).json({userid: userid});
+                   } else {
+                       res.status(404).json('User not found');
+                   }
+               }
+           }
+       );
+    });
+});
 
 // Server'ı başlatma
 app.listen(port, () => {
