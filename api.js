@@ -308,126 +308,126 @@ app.put('/api/user/createpassword', (req, res) => {
 });
 
 app.post('/api/user/twofactoractive', (req, res) => {
-
     const {username, password} = req.body;
 
-    connection.query(
-        'UPDATE users SET twofactor = 1 WHERE username = ? AND password = ?', [username, password],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error updating user status in database.');
-            } else if (results.affectedRows === 0) {
-                console.log('No user found with provided credentials.');
-                res.status(401).send('Invalid username or password.');
-            } else if (results.changedRows === 0) {
-                console.log('User already has Two-Factor Authentication active.');
-                res.status(409).send('User already has Two-Factor Authentication active.');
-            } else {
-                console.log('User twofactor updated:', results.affectedRows);
-                res.status(200).send('User twofactor set to 1.');
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'UPDATE users SET twofactor = 1 WHERE username = ? AND password = ?', [username, password],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send('Error updating user status in database.');
+                } else if (results.affectedRows === 0) {
+                    console.log('No user found with provided credentials.');
+                    res.status(401).send('Invalid username or password.');
+                } else if (results.changedRows === 0) {
+                    console.log('User already has Two-Factor Authentication active.');
+                    res.status(409).send('User already has Two-Factor Authentication active.');
+                } else {
+                    console.log('User twofactor updated:', results.affectedRows);
+                    res.status(200).send('User twofactor set to 1.');
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/twofactordeactive', (req, res) => {
-
     const {username, password} = req.body;
 
-    connection.query(
-        'UPDATE users SET twofactor = 0 WHERE username = ? AND password = ?',
-        [username, password],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error updating user status in database.');
-            } else if (results.affectedRows === 0) {
-                console.log('No user found with provided credentials.');
-                res.status(401).send('Invalid username or password.');
-            } else {
-                console.log('User twofactor updated:', results.affectedRows);
-                res.status(200).send('User twofactor set to 0.');
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'UPDATE users SET twofactor = 0 WHERE username = ? AND password = ?',
+            [username, password],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send('Error updating user status in database.');
+                } else if (results.affectedRows === 0) {
+                    console.log('No user found with provided credentials.');
+                    res.status(401).send('Invalid username or password.');
+                } else {
+                    console.log('User twofactor updated:', results.affectedRows);
+                    res.status(200).send('User twofactor set to 0.');
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/finduserid', (req, res) => {
-
     const {email} = req.body;
 
-    connection.query(
-        'SELECT userid FROM users WHERE email = ?', [email],
-        (err, results) => {
-            if (err) {
-                console.error(err);
-                res.status(500).json({error: 'Server error'});
-            } else {
-                if (results.length > 0) {
-                    const userid = results[0].userid;
-                    res.status(200).json({userid: userid});
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT userid FROM users WHERE email = ?', [email],
+            (err, results) => {
+                if (err) {
+                    console.error(err);
+                    res.status(500).json({error: 'Server error'});
                 } else {
-                    res.status(404).json({error: 'User not found'});
+                    if (results.length > 0) {
+                        const userid = results[0].userid;
+                        res.status(200).json({userid: userid});
+                    } else {
+                        res.status(404).json({error: 'User not found'});
+                    }
                 }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/usernametoemail', (req, res) => {
-
     const {username} = req.body;
-    connection.query(
-        'SELECT email FROM users WHERE username = ?', [username],
-        (err, results) => {
-            if (err) {
-                // Hata durumunda uygun bir işlem yapılabilir
-                console.error(err);
-                res.status(500).json({error: 'Server error'});
-            } else {
-                if (results.length > 0) {
-                    const email = results[0].email;
-                    res.status(200).json({email: email});
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT email FROM users WHERE username = ?', [username],
+            (err, results) => {
+                if (err) {
+                    // Hata durumunda uygun bir işlem yapılabilir
+                    console.error(err);
+                    res.status(500).json({error: 'Server error'});
                 } else {
-                    res.status(404).json({error: 'User not found'});
+                    if (results.length > 0) {
+                        const email = results[0].email;
+                        res.status(200).json({email: email});
+                    } else {
+                        res.status(404).json({error: 'User not found'});
+                    }
                 }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/emailtousername', (req, res) => {
-
     const {email} = req.body;
 
-    connection.query(
-        'SELECT username FROM users WHERE email = ?', [email],
-        (err, results) => {
-            if (err) {
-                // Hata durumunda uygun bir işlem yapılabilir
-                console.error(err);
-                res.status(500).json({error: 'Server error'});
-            } else {
-                if (results.length > 0) {
-                    const username = results[0].username;
-                    res.status(200).json({username: username});
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT username FROM users WHERE email = ?', [email],
+            (err, results) => {
+                if (err) {
+                    // Hata durumunda uygun bir işlem yapılabilir
+                    console.error(err);
+                    res.status(500).json({error: 'Server error'});
                 } else {
-                    res.status(404).json({error: 'User not found'});
+                    if (results.length > 0) {
+                        const username = results[0].username;
+                        res.status(200).json({username: username});
+                    } else {
+                        res.status(404).json({error: 'User not found'});
+                    }
                 }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.get('/api/user/get', (req, res) => {
     const userId = req.query.userid; //çalışıyorsa dokunma
-
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
@@ -522,91 +522,89 @@ app.post('/api/chat/delete/header', (req, res) => {
 });
 
 app.post('/api/chat/update', (req, res) => {
-
     const {groupName, groupname, groupdes, groupphoto} = req.body;
 
-    // Veritabanında chati bul
-    connection.query(
-        'SELECT * FROM chats WHERE groupname = ?',
-        [groupName],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error querying database.');
-            } else if (results.length === 0) {
-                console.log('Chat with provided id not found.');
-                res.status(404).send('Chat not found.');
-            } else {
-                const chat = results[0];
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM chats WHERE groupname = ?',
+            [groupName],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send('Error querying database.');
+                } else if (results.length === 0) {
+                    console.log('Chat with provided id not found.');
+                    res.status(404).send('Chat not found.');
+                } else {
+                    const chat = results[0];
 
-                // groupname, groupdes veya groupphoto varsa güncelle
-                if (groupname) chat.groupname = groupname;
-                if (groupdes) chat.groupdes = groupdes;
-                if (groupphoto) chat.groupphoto = groupphoto;
+                    // groupname, groupdes veya groupphoto varsa güncelle
+                    if (groupname) chat.groupname = groupname;
+                    if (groupdes) chat.groupdes = groupdes;
+                    if (groupphoto) chat.groupphoto = groupphoto;
 
-                // Güncellenmiş chati veritabanında güncelle
+                    // Güncellenmiş chati veritabanında güncelle
+                    connection.query(
+                        'UPDATE chats SET groupname = ?, groupdes = ?, groupphoto = ? WHERE groupname = ?',
+                        [chat.groupname, chat.groupdes, chat.groupphoto, groupName],
+                        (err, results) => {
+                            if (err) {
+                                console.log('Error updating chat in MySQL:', err);
+                                res.status(500).send('Error updating chat in database.');
+                            } else {
+                                console.log('Chat updated successfully.');
+                                res.status(200).send('Chat updated successfully.');
+                            }
+                        }
+                    );
+                }
+            }
+        );
+    });
+});
+
+app.post('/api/chat/newchat', (req, res) => {
+    const {adminid, groupphoto, groupname, groupdes} = req.body;
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT COUNT(*) AS chatCount FROM chats WHERE adminid = ?',
+            [adminid],
+            (err, results) => {
+                if (err) {
+                    console.error('Error counting chat records:', err);
+                    res.status(500).send('Error counting chat records');
+                    return;
+                }
+
+                const chatCount = results[0].chatCount;
+                if (chatCount >= 10) {
+                    console.log('Maximum chat limit reached for admin:', adminid);
+                    res.status(403).send({error: 'Maximum chat limit reached for admin'});
+                    return;
+                }
+
                 connection.query(
-                    'UPDATE chats SET groupname = ?, groupdes = ?, groupphoto = ? WHERE groupname = ?',
-                    [chat.groupname, chat.groupdes, chat.groupphoto, groupName],
+                    'INSERT INTO chats (adminid, groupphoto, groupname, groupdes) VALUES (?, ?, ?, ?)',
+                    [adminid, groupphoto, groupname, groupdes],
                     (err, results) => {
                         if (err) {
-                            console.log('Error updating chat in MySQL:', err);
-                            res.status(500).send('Error updating chat in database.');
+                            if (err.code === 'ER_DUP_ENTRY') {
+                                console.log(`Group already exists with name ${groupname}.`);
+                                res.status(409).send({error: 'Conflict: Group already exists with this name.'});
+                            } else {
+                                console.error('Error inserting record:', err);
+                                res.status(500).send('Error inserting record');
+                            }
                         } else {
-                            console.log('Chat updated successfully.');
-                            res.status(200).send('Chat updated successfully.');
+                            console.log('Inserted into MySQL:', results);
+                            res.status(200).send('Record inserted successfully');
                         }
                     }
                 );
             }
-        }
-    );
-
-});
-
-app.post('/api/chat/newchat', (req, res) => {
-
-    const {adminid, groupphoto, groupname, groupdes} = req.body;
-
-    // Adminin mevcut sohbet sayısını kontrol et
-    connection.query(
-        'SELECT COUNT(*) AS chatCount FROM chats WHERE adminid = ?',
-        [adminid],
-        (err, results) => {
-            if (err) {
-                console.error('Error counting chat records:', err);
-                res.status(500).send('Error counting chat records');
-                return;
-            }
-
-            const chatCount = results[0].chatCount;
-            if (chatCount >= 10) {
-                console.log('Maximum chat limit reached for admin:', adminid);
-                res.status(403).send({error: 'Maximum chat limit reached for admin'});
-                return;
-            }
-
-            connection.query(
-                'INSERT INTO chats (adminid, groupphoto, groupname, groupdes) VALUES (?, ?, ?, ?)',
-                [adminid, groupphoto, groupname, groupdes],
-                (err, results) => {
-                    if (err) {
-                        if (err.code === 'ER_DUP_ENTRY') {
-                            console.log(`Group already exists with name ${groupname}.`);
-                            res.status(409).send({error: 'Conflict: Group already exists with this name.'});
-                        } else {
-                            console.error('Error inserting record:', err);
-                            res.status(500).send('Error inserting record');
-                        }
-                    } else {
-                        console.log('Inserted into MySQL:', results);
-                        res.status(200).send('Record inserted successfully');
-                    }
-                }
-            );
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/chat/color', (req, res) => {
@@ -618,85 +616,87 @@ app.post('/api/chat/color', (req, res) => {
         return;
     }
 
-    connection.query(
-        'UPDATE chats SET groupcolor = ?',
-        [groupColor],
-        (err, results) => {
-            if (err) {
-                console.log('Error:', err);
-                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
-            } else {
-                console.log('Group color updated:', results);
-                res.status(200).send({message: 'Group color updated successfully'});
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'UPDATE chats SET groupcolor = ?',
+            [groupColor],
+            (err, results) => {
+                if (err) {
+                    console.log('Error:', err);
+                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                } else {
+                    console.log('Group color updated:', results);
+                    res.status(200).send({message: 'Group color updated successfully'});
+                }
             }
-        }
-    );
+        );
+    });
 });
 
 app.post('/api/chat/groupnametogroupid', (req, res) => {
-
     const {groupname} = req.body;
 
-    connection.query(
-        'SELECT groupid FROM chats WHERE groupname = ?', [groupname],
-        (err, results) => {
-            if (err) {
-                console.error(err);
-                res.status(500).json({error: 'Server error'});
-            } else {
-                if (results.length > 0) {
-                    const groupid = results[0].groupid;
-                    res.status(200).json({groupid: groupid});
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT groupid FROM chats WHERE groupname = ?', [groupname],
+            (err, results) => {
+                if (err) {
+                    console.error(err);
+                    res.status(500).json({error: 'Server error'});
                 } else {
-                    res.status(404).json({error: 'chat not found'});
+                    if (results.length > 0) {
+                        const groupid = results[0].groupid;
+                        res.status(200).json({groupid: groupid});
+                    } else {
+                        res.status(404).json({error: 'chat not found'});
+                    }
                 }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/chat/delete', (req, res) => {
-
     const {groupname, adminid} = req.body;
 
-    connection.query(
-        'DELETE FROM chats WHERE groupname = ? AND adminid = ?', [groupname, adminid],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error deleting chat in database.');
-            } else if (results.affectedRows === 0) {
-                console.log('No chat found with provided credentials.');
-                //res.status(404).send(`Invalid chat ${groupname} ${adminid}. ${JSON.stringify(results)}`);
-                res.status(404).send(`Invalid chat ${groupname}`);
-            } else {
-                console.log('Chat with name ${groupname} deleted successfully.');
-                res.status(200).send('Chat deleted successfully');
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'DELETE FROM chats WHERE groupname = ? AND adminid = ?', [groupname, adminid],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send('Error deleting chat in database.');
+                } else if (results.affectedRows === 0) {
+                    console.log('No chat found with provided credentials.');
+                    //res.status(404).send(`Invalid chat ${groupname} ${adminid}. ${JSON.stringify(results)}`);
+                    res.status(404).send(`Invalid chat ${groupname}`);
+                } else {
+                    console.log('Chat with name ${groupname} deleted successfully.');
+                    res.status(200).send('Chat deleted successfully');
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.get('/api/chat/get', (req, res) => {
-
     const adminId = req.query.adminid; //çalışıyorsa dokunma
 
-    connection.query(
-        'SELECT * FROM chats WHERE adminid = ?',
-        [adminId],
-        (err, results) => {
-            if (err) {
-                console.error('Error retrieving records:', err);
-                res.status(500).send('Error retrieving records');
-            } else {
-                console.log('Retrieved records:', results);
-                res.status(200).send(results);
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM chats WHERE adminid = ?',
+            [adminId],
+            (err, results) => {
+                if (err) {
+                    console.error('Error retrieving records:', err);
+                    res.status(500).send('Error retrieving records');
+                } else {
+                    console.log('Retrieved records:', results);
+                    res.status(200).send(results);
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.get('/api/chat/get/all', (req, res) => {
