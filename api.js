@@ -809,6 +809,30 @@ app.post('/api/follow/add', (req, res) => {
     });
 });
 
+app.post('/api/follow/remove', (req, res) => {
+    const {followerid, followedid} = req.body;
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'DELETE FROM follow WHERE followerid = ? AND followedid = ?',
+            [followerid, followedid],
+            (err, results) => {
+                if (err) {
+                    console.error('MySQL query error:', err);
+                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                } else if (results.affectedRows === 0) {
+                    console.error('No rows were affected. Check your input data.');
+                    res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
+                } else {
+                    console.log('Deleted from MySQL:', results);
+                    res.status(200).send();
+                }
+            }
+        );
+    });
+});
+
+
 // Server'ı başlatma
 app.listen(port, () => {
     console.log(`Server started on port ${port}.`);
