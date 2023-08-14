@@ -11,7 +11,6 @@ const port = 5000;
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
-// MySQL bağlantısı oluşturmak
 const dbConfig = {
     host: '77.223.138.139',
     user: 'projech1_kullanici',
