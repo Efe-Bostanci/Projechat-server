@@ -12,20 +12,26 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 // MySQL bağlantısı oluşturmak
-const connection = mysql.createConnection({
+const dbConfig = {
     host: '77.223.138.139',
     user: 'projech1_kullanici',
     password: 'L6P]hm6(3cSOd9',
     database: 'projech1_data'
-});
+};
 
-connection.connect((err) => {
-    if (err) {
-        console.log('Error connecting to MySQL:', err);
-    } else {
-        console.log('Connected to MySQL database.');
-    }
-});
+const dbPool = mysql.createPool(dbConfig);
+
+const getConnectionAndExecute = (req, res, callback) => {
+    dbPool.getConnection((err, connection) => {
+        if (err) {
+            console.error('Veritabanı bağlantı hatası:', err);
+            res.status(500).json({error: 'Veritabanı bağlantı hatası'});
+            return;
+        }
+
+        callback(connection);
+    });
+};
 
 //---------------------------------------------------------user---------------------------------------------------------
 const storageUser = multer.diskStorage({
@@ -82,67 +88,68 @@ app.post('/api/user/update', (req, res) => {
 
     const {userid, username, userbio, profilephoto} = req.body;
 
-    connection.query(
-        'SELECT * FROM users WHERE userid = ?', [userid],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error querying database.');
-            } else if (results.length === 0) {
-                console.log('User with provided id not found.');
-                res.status(404).send(`User not found ${userid}.`);
-            } else {
-                const user = results[0];
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM users WHERE userid = ?', [userid],
+            (err, results) => {
+                if (err) {
+                    console.log('Error querying MySQL:', err);
+                    res.status(500).send('Error querying database.');
+                } else if (results.length === 0) {
+                    console.log('User with provided id not found.');
+                    res.status(404).send(`User not found ${userid}.`);
+                } else {
+                    const user = results[0];
 
-                // username, userbio veya profilephoto varsa güncelle
-                if (username) user.username = username;
-                if (userbio) user.userbio = userbio;
-                if (profilephoto) user.profilephoto = profilephoto;
+                    // username, userbio veya profilephoto varsa güncelle
+                    if (username) user.username = username;
+                    if (userbio) user.userbio = userbio;
+                    if (profilephoto) user.profilephoto = profilephoto;
 
-                connection.query(
-                    'UPDATE users SET username = ?, userbio = ?, profilephoto = ? WHERE userid = ?',// WHERE username
-                    [user.username, user.userbio, user.profilephoto, userid],
-                    (err, results) => {
-                        if (err) {
-                            console.log('Error updating user in MySQL:', err);
-                            res.status(500).send('Error updating user in database.');
-                        } else {
-                            console.log('User updated successfully.');
-                            res.status(200).send('User updated successfully.');
+                    connection.query(
+                        'UPDATE users SET username = ?, userbio = ?, profilephoto = ? WHERE userid = ?',// WHERE username
+                        [user.username, user.userbio, user.profilephoto, userid],
+                        (err, results) => {
+                            if (err) {
+                                console.log('Error updating user in MySQL:', err);
+                                res.status(500).send('Error updating user in database.');
+                            } else {
+                                console.log('User updated successfully.');
+                                res.status(200).send('User updated successfully.');
+                            }
                         }
-                    }
-                );
+                    );
+                }
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/signup', (req, res) => {
-
     const {name, lastname, email, username, userbio, password, profilephoto, twofactor, status} = req.body;
 
-    connection.query(
-        'INSERT INTO users (name, lastname, email, username, userbio, password, profilephoto, twofactor, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [name, lastname, email, username, userbio, password, profilephoto, twofactor, status],
-        (err, results) => {
-            if (err) {
-                if (err.code === 'ER_DUP_ENTRY') {
-                    console.log(`User already exists with email ${email}.`);
-                    res.status(409).send({error: 'Conflict: User already exists with this email.'});
-                } else if (err.code === 'ER_DUP_ENTRY' && err.sqlMessage.includes('username')) {
-                    console.log(`User already exists with username ${username}.`);
-                    res.status(409).send({error: 'Conflict: User already exists with this username.'});
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'INSERT INTO users (name, lastname, email, username, userbio, password, profilephoto, twofactor, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [name, lastname, email, username, userbio, password, profilephoto, twofactor, status],
+            (err, results) => {
+                if (err) {
+                    if (err.code === 'ER_DUP_ENTRY') {
+                        console.log(`User already exists with email ${email}.`);
+                        res.status(409).send({error: 'Conflict: User already exists with this email.'});
+                    } else if (err.code === 'ER_DUP_ENTRY' && err.sqlMessage.includes('username')) {
+                        console.log(`User already exists with username ${username}.`);
+                        res.status(409).send({error: 'Conflict: User already exists with this username.'});
+                    } else {
+                        console.log('Error inserting into MySQL:', err);
+                        res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                    }
                 } else {
-                    console.log('Error inserting into MySQL:', err);
-                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                    console.log('Inserted into MySQL:', results);
+                    res.status(200).send({message: 'User successfully inserted into database.'});
                 }
-            } else {
-                console.log('Inserted into MySQL:', results);
-                res.status(200).send({message: 'User successfully inserted into database.'});
             }
-        }
-    );
-
+        );
+    });
 });
 
 app.post('/api/user/login', (req, res) => {
@@ -421,41 +428,45 @@ app.post('/api/user/emailtousername', (req, res) => {
 });
 
 app.get('/api/user/get', (req, res) => {
-
     const userId = req.query.userid; //çalışıyorsa dokunma
 
-    connection.query(
-        'SELECT username, userbio, profilephoto FROM users WHERE userid = ?',
-        [userId],
-        (err, results) => {
-            if (err) {
-                console.error('MySQL sorgu hatası:', err);
-                res.status(500).json({error: 'Veritabanında bir hata oluştu.'});
-            } else if (results.length === 0) {
-                console.log('No user found with provided userid.');
-                res.status(404).json({error: 'Geçersiz userid.'});
-            } else {
-                console.log('Retrieved records:', results);
-                res.status(200).json(results[0]); // İlk kaydı döndür
-            }
-        }
-    );
 
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT username, userbio, profilephoto FROM users WHERE userid = ?',
+            [userId],
+            (err, results) => {
+                if (err) {
+                    console.error('MySQL sorgu hatası:', err);
+                    res.status(500).json({error: 'Veritabanında bir hata oluştu.'});
+                } else if (results.length === 0) {
+                    console.log('No user found with provided userid.');
+                    res.status(404).json({error: 'Geçersiz userid.'});
+                } else {
+                    console.log('Retrieved records:', results);
+                    res.status(200).json(results[0]); // İlk kaydı döndür
+                }
+            }
+        );
+    });
 });
 
 app.get('/api/user/get/all', (req, res) => {
-    connection.query(
-        'SELECT userid, username, userbio, profilephoto FROM users',
-        (err, results) => {
-            if (err) {
-                console.error('Error retrieving records:', err);
-                res.status(500).send('Error retrieving records');
-            } else {
-                console.log('Retrieved records:', results);
-                res.status(200).send(results);
+    getConnectionAndExecute(req, res, (connection) => {
+
+        connection.query(
+            'SELECT userid, username, userbio, profilephoto FROM users',
+            (err, results) => {
+                if (err) {
+                    console.error('Error retrieving records:', err);
+                    res.status(500).send('Error retrieving records');
+                } else {
+                    console.log('Retrieved records:', results);
+                    res.status(200).send(results);
+                }
             }
-        }
-    );
+        );
+    });
 });
 
 //---------------------------------------------------------chat---------------------------------------------------------
