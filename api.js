@@ -787,27 +787,43 @@ app.post('/api/chat/newmessage', (req, res) => {
 
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
-    const {followerid, followedid} = req.body;
+    const { followerid, username } = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'INSERT INTO follow (followerid, followedid) VALUES (?, ?)',
-            [followerid, followedid],
-            (err, results) => {
+            'SELECT userid FROM users WHERE username = ?',
+            [username],
+            (err, userResults) => {
                 if (err) {
                     console.error('MySQL query error:', err);
-                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
-                } else if (results.affectedRows === 0) {
-                    console.error('No rows were affected. Check your input data.');
-                    res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
+                    res.status(500).send({ error: 'Internal Server Error: Please try again later.' });
+                } else if (userResults.length === 0) {
+                    console.error('User not found. Check the username.');
+                    res.status(404).send({ error: 'User not found.' });
                 } else {
-                    console.log('Inserted into MySQL:', results);
-                    res.status(200).send();
+                    const followedid = userResults[0].userid;
+
+                    getConnectionAndExecute(req, res, (connection) => {
+                        connection.query(
+                            'INSERT INTO follow (followerid, followedid) VALUES (?, ?)',
+                            [followerid, followedid],
+                            (followErr, followResults) => {
+                                if (followErr) {
+                                    console.error('MySQL query error:', followErr);
+                                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                                } else {
+                                    console.log('Followed user:', username);
+                                    res.status(200).send();
+                                }
+                            }
+                        );
+                    });
                 }
             }
         );
     });
 });
+
 
 app.post('/api/follow/remove', (req, res) => {
     const {followerid, followedid} = req.body;
