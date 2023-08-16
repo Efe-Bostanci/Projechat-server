@@ -878,19 +878,23 @@ app.get('/api/follow/all', (req, res) => {
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'SELECT COUNT(*) AS followerCount FROM follow WHERE followerid = ?',
-            [userid],
+            'SELECT ' +
+            '(SELECT COUNT(*) FROM follow WHERE followerid = ?) AS followerCount, ' +
+            '(SELECT COUNT(*) FROM follow WHERE followedid = ?) AS followedCount',
+            [userid, userid],
             (error, results) => {
                 if (error) {
                     res.status(500).json({error: 'Veritabanı hatası'});
                 } else {
                     const followerCount = results[0].followerCount;
-                    res.status(200).json({followerCount});
+                    const followedCount = results[0].followedCount;
+                    res.status(200).json({followerCount, followedCount});
                 }
             }
         );
     });
 });
+
 
 app.get('/api/follow/2/all', (req, res) => {
     const userid = req.query.userid;
