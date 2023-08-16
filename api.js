@@ -836,22 +836,40 @@ app.post('/api/follow/get', (req, res) => {
     const {username} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
-       connection.query(
-           'SELECT userid FROM users WHERE username = ?', [username],
-           (err, results) => {
-               if (err) {
-                   console.error(err);
-                   res.status(500).json({error: 'Server error'});
-               } else {
-                   if (results.length > 0) {
-                       const userid = results[0].userid;
-                       res.status(200).json({userid: userid});
-                   } else {
-                       res.status(404).json('User not found');
-                   }
-               }
-           }
-       );
+        connection.query(
+            'SELECT userid FROM users WHERE username = ?', [username],
+            (err, results) => {
+                if (err) {
+                    console.error(err);
+                    res.status(500).json({error: 'Server error'});
+                } else {
+                    if (results.length > 0) {
+                        const userid = results[0].userid;
+                        res.status(200).json({userid: userid});
+                    } else {
+                        res.status(404).json('User not found');
+                    }
+                }
+            }
+        );
+    });
+});
+
+app.post('/api/follow/followstatus', (req, res) => {
+    const followerId = req.body.followerid;
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query('SELECT followedid FROM follow WHERE followerid = ?', [followerId],
+            (err, results) => {
+                if (err) {
+                    console.error('Error executing MySQL query:', err);
+                    res.status(500).json({error: 'An error occurred while fetching data'});
+                } else {
+                    const followedIds = results.map(result => result.followedid);
+                    res.status(200).json({followedIds: followedIds});
+                }
+            }
+        );
     });
 });
 
@@ -864,10 +882,10 @@ app.get('/api/follow/all', (req, res) => {
             [userid],
             (error, results) => {
                 if (error) {
-                    res.status(500).json({ error: 'Veritabanı hatası' });
+                    res.status(500).json({error: 'Veritabanı hatası'});
                 } else {
                     const followerCount = results[0].followerCount;
-                    res.status(200).json({ followerCount });
+                    res.status(200).json({followerCount});
                 }
             }
         );
