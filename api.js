@@ -874,7 +874,6 @@ app.post('/api/follow/all', (req, res) => {
     });
 });
 
-
 // Server'ı başlatma
 app.listen(port, () => {
     console.log(`Server started on port ${port}.`);
