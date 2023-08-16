@@ -895,26 +895,6 @@ app.get('/api/follow/all', (req, res) => {
     });
 });
 
-
-app.get('/api/follow/2/all', (req, res) => {
-    const userid = req.query.userid;
-
-    getConnectionAndExecute(req, res, (connection) => {
-        connection.query(
-            'SELECT COUNT(*) AS followerCount2 FROM follow WHERE followedid = ?',
-            [userid],
-            (error, results) => {
-                if (error) {
-                    res.status(500).json({error: 'Veritabanı hatası'});
-                } else {
-                    const followerCount2 = results[0].followerCount2;
-                    res.status(200).json({followerCount2});
-                }
-            }
-        );
-    });
-});
-
 // Server'ı başlatma
 app.listen(port, () => {
     console.log(`Server started on port ${port}.`);
