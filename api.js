@@ -432,7 +432,7 @@ app.get('/api/user/get', (req, res) => {
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'SELECT username, userbio, profilephoto FROM users WHERE userid = ?',
+            'SELECT username, userbio, profilephoto, email FROM users WHERE userid = ?',
             [userId],
             (err, results) => {
                 if (err) {
