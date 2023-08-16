@@ -856,7 +856,7 @@ app.post('/api/follow/get', (req, res) => {
 });
 
 app.post('/api/follow/all', (req, res) => {
-    const { userid } = req.body;
+    const {userid} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
