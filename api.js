@@ -860,7 +860,7 @@ app.post('/api/follow/all', (req, res) => {
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'SELECT COUNT(*) AS followerCount FROM follow WHERE followedid = ?',
+            'SELECT COUNT(*) AS followerCount FROM follow WHERE followerid = ?',
             [userid],
             (error, results) => {
                 if (error) {
