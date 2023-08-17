@@ -684,12 +684,24 @@ app.post('/api/chat/delete', (req, res) => {
 });
 
 app.get('/api/chat/get', (req, res) => {
-    const adminId = req.query.adminid; //çalışıyorsa dokunma
+    const adminId = req.query.adminid;
+    const groupName = req.query.groupName;
 
     getConnectionAndExecute(req, res, (connection) => {
+        let query = 'SELECT * FROM chats';
+
+        if (adminId) {
+            query += ' WHERE adminid = ?';
+        } else if (groupName) {
+            query += ' WHERE groupName = ?';
+        } else {
+            res.status(400).send('Invalid parameters');
+            return;
+        }
+
         connection.query(
-            'SELECT * FROM chats WHERE adminid = ?',
-            [adminId],
+            query,
+            [adminId || groupName],
             (err, results) => {
                 if (err) {
                     console.error('Error retrieving records:', err);
@@ -702,6 +714,7 @@ app.get('/api/chat/get', (req, res) => {
         );
     });
 });
+
 
 app.get('/api/chat/get/all', (req, res) => {
 
