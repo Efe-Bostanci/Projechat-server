@@ -715,7 +715,6 @@ app.get('/api/chat/get', (req, res) => {
     });
 });
 
-
 app.get('/api/chat/get/all', (req, res) => {
 
     getConnectionAndExecute(req, res, (connection) => {
@@ -797,6 +796,9 @@ app.post('/api/chat/newmessage', (req, res) => {
         );
     });
 });
+
+//---------------------------------------------------------post---------------------------------------------------------
+
 
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
