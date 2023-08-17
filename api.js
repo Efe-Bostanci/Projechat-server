@@ -798,7 +798,22 @@ app.post('/api/chat/newmessage', (req, res) => {
 });
 
 //---------------------------------------------------------post---------------------------------------------------------
-
+app.get('/api/post/get/all', (req, res) => {
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM posts',
+            (err, results) => {
+                if (err) {
+                    console.error('Error retrieving records:', err);
+                    res.status(500).send('Error retrieving records');
+                } else {
+                    console.log('Retrieved records:', results);
+                    res.status(200).send(results);
+                }
+            }
+        );
+    });
+});
 
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
