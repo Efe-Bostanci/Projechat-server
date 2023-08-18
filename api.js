@@ -798,6 +798,32 @@ app.post('/api/chat/newmessage', (req, res) => {
 });
 
 //---------------------------------------------------------post---------------------------------------------------------
+const storagePost = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const targetDirectory = '/var/www/html/uploads/post';
+        fs.mkdirSync(targetDirectory, {recursive: true});
+        cb(null, targetDirectory);
+    },
+    filename: (req, file, cb) => {
+        const uniqueId = crypto.randomBytes(4).toString('hex');
+        const modifiedFileName = `PCT_${uniqueId}_${file.originalname}`;
+        cb(null, modifiedFileName);
+    }
+});
+const uploadPost = multer({storage: storagePost}).single('photo');
+
+app.post('/api/post/upload', (req, res) => {
+    uploadPost(req, res, (err) => {
+        if (err) {
+            console.log('Error uploading profile photo:', err);
+            res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
+        } else {
+            const imageUrl = `http://23.26.248.43/uploads/post/${req.file.filename}`;
+            res.json({success: true, imageUrl: imageUrl});
+        }
+    });
+});
+
 app.get('/api/post/get/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
