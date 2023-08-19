@@ -824,35 +824,6 @@ app.post('/api/post/upload', (req, res) => {
     });
 });
 
-app.get('/api/post/photo/:postid', (req, res) => {
-    const postid = req.params.postid;
-
-    getConnectionAndExecute(req, res, (connection) => {
-        connection.query('SELECT postphoto FROM posts WHERE postid = ?', [postid], (err, results) => {
-            if (err) {
-                console.error('Error querying database:', err);
-                res.status(500).json({success: false, message: 'Internal server error'});
-            } else if (results.length === 0) {
-                res.status(404).json({success: false, message: 'Post not found'});
-            } else {
-                const photoPath = results[0].postphoto;
-                const photoAbsolutePath = path.join(__dirname, 'uploads', 'post', photoPath);
-
-                // Fotoğrafı okuyup yanıt olarak gönderin
-                fs.readFile(photoAbsolutePath, (err, data) => {
-                    if (err) {
-                        console.error('Error reading photo:', err);
-                        res.status(500).json({success: false, message: 'Error reading photo'});
-                    } else {
-                        res.writeHead(200, {'Content-Type': 'image/jpeg'});
-                        res.end(data);
-                    }
-                });
-            }
-        });
-    });
-});
-
 app.get('/api/post/get/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
