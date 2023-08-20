@@ -824,6 +824,30 @@ app.post('/api/post/upload', (req, res) => {
     });
 });
 
+app.post('/api/post/newpost', (req, res) => {
+    const {userid, postphoto, postname, postdes} = req.body;
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'INSERT INTO posts (userid, postphoto, postname, postdes) VALUES (?, ?, ?, ?)',
+            [userid, postphoto, postname, postdes],
+            (err, results) => {
+                if (err) {
+                    if (err.code === 'ANOTHER_ERROR_CODE') {
+                        res.status(404).send({error: 'Not Found: Another specific error occurred.'});
+                    } else {
+                        console.error('Error inserting record:', err);
+                        res.status(500).send('Error inserting record');
+                    }
+                } else {
+                    console.log('Inserted into MySQL:', results);
+                    res.status(200).send('Record inserted successfully');
+                }
+            }
+        );
+    });
+});
+
 app.get('/api/post/get/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
