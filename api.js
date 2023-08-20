@@ -865,6 +865,26 @@ app.get('/api/post/get/all', (req, res) => {
     });
 });
 
+app.get('/api/post/get/id', (req, res) => {
+    const userid = req.query.userid;
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT * FROM posts WHERE userid = ?',
+            [userid],
+            (err, results) => {
+                if (err) {
+                    console.error('Error retrieving records:', err);
+                    res.status(500).send('Error retrieving records');
+                } else {
+                    console.log('Retrieved records:', results);
+                    res.status(200).send(results);
+                }
+            }
+        );
+    });
+});
+
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
     const {followerid, followedid} = req.body;
