@@ -848,6 +848,32 @@ app.post('/api/post/newpost', (req, res) => {
     });
 });
 
+app.post('/api/post/delete', (req, res) => {
+    const {userid, postname} = req.body;
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'DELETE FROM posts WHERE userid = ? AND postname = ?',
+            [userid, postname],
+            (err, results) => {
+                if (err) {
+                    console.error('Error deleting record:', err);
+                    res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                } else {
+                    if (results.affectedRows > 0) {
+                        console.log('Deleted from MySQL:', results);
+                        res.status(200).send();
+                    } else {
+                        console.log('No matching record found.');
+                        res.status(404).send({error: 'No matching record found.'});
+                    }
+                }
+            }
+        );
+    });
+});
+
+
 app.get('/api/post/get/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
