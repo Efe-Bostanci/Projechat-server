@@ -757,7 +757,6 @@ app.get('/api/chat/chat-messages', (req, res) => {
     const page = parseInt(req.query.page) || 1; // Sayfa numarasını al
     const pageSize = parseInt(req.query.pageSize) || 10; // Sayfa boyutunu al
     const startIndex = (page - 1) * pageSize;
-    const endIndex = page * pageSize;
 
     const query = 'SELECT id, groupid, senderid, content, timestamp FROM chat_messages ORDER BY timestamp DESC LIMIT ?, ?';
 
@@ -873,6 +872,25 @@ app.post('/api/post/delete', (req, res) => {
     });
 });
 
+app.post('/api/post/save', (req, res) => {
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+            (err, results) => {
+                if (err){
+                    console.error('Error retrieving records:', err);
+                    res.status(500).send('Error retrieving records');
+                }else if (results.affectedRows === 0) {
+                    console.error('No rows were affected. Check your input data.');
+                    res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
+                } else {
+                    console.log('New chat message added to MySQL:', results);
+                    res.status(200).send({message: 'New chat message successfully added.'});
+                }
+            }
+        );
+    });
+});
 
 app.get('/api/post/get/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
