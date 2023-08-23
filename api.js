@@ -828,19 +828,33 @@ app.post('/api/post/newpost', (req, res) => {
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'INSERT INTO posts (userid, postphoto, postname, postdes) VALUES (?, ?, ?, ?)',
-            [userid, postphoto, postname, postdes],
-            (err, results) => {
-                if (err) {
-                    if (err.code === 'ANOTHER_ERROR_CODE') {
-                        res.status(404).send({error: 'Not Found: Another specific error occurred.'});
-                    } else {
-                        console.error('Error inserting record:', err);
-                        res.status(500).send('Error inserting record');
-                    }
+            'SELECT * FROM posts WHERE postname = ? AND userid = ?',
+            [postname, userid],
+            (selectErr, selectResults) => {
+                if (selectErr) {
+                    console.error('Error selecting record:', selectErr);
+                    res.status(500).send('Error selecting record');
                 } else {
-                    console.log('Inserted into MySQL:', results);
-                    res.status(200).send('Record inserted successfully');
+                    if (selectResults.length > 0) {
+                        res.status(400).send('A post with the same name already exists for this user.');
+                    } else {
+
+                        getConnectionAndExecute(req, res, (connection) => {
+                            connection.query(
+                                'INSERT INTO posts (userid, postphoto, postname, postdes) VALUES (?, ?, ?, ?)',
+                                [userid, postphoto, postname, postdes],
+                                (insertErr, insertResults) => {
+                                    if (insertErr) {
+                                        console.error('Error inserting record:', insertErr);
+                                        res.status(500).send('Error inserting record');
+                                    } else {
+                                        console.log('Inserted into MySQL:', insertResults);
+                                        res.status(200).send('Record inserted successfully');
+                                    }
+                                }
+                            );
+                        });
+                    }
                 }
             }
         );
@@ -877,10 +891,10 @@ app.post('/api/post/save', (req, res) => {
         connection.query(
             'INSERT INTO saves (userid, postid) VALUES (?, ?)',
             (err, results) => {
-                if (err){
+                if (err) {
                     console.error('Error retrieving records:', err);
                     res.status(500).send('Error retrieving records');
-                }else if (results.affectedRows === 0) {
+                } else if (results.affectedRows === 0) {
                     console.error('No rows were affected. Check your input data.');
                     res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
                 } else {
