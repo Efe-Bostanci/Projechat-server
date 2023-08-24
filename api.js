@@ -889,25 +889,45 @@ app.post('/api/post/delete', (req, res) => {
 app.post('/api/post/save', (req, res) => {
     const {userid, postname} = req.body;
 
+    // Check if the postname already exists in the database
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'INSERT INTO saves (userid, postname) VALUES (?, ?)',
-            [userid, postname],
+            'SELECT COUNT(*) as count FROM saves WHERE postname = ?',
+            [postname],
             (err, results) => {
                 if (err) {
-                    console.error('Error retrieving records:', err);
-                    res.status(500).send('Error retrieving records');
-                } else if (results.affectedRows === 0) {
-                    console.error('No rows were affected. Check your input data.');
-                    res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
+                    console.error('Error checking for existing records:', err);
+                    res.status(500).send('Error checking for existing records');
                 } else {
-                    console.log('New chat message added to MySQL:', results);
-                    res.status(200).send({message: 'New chat message successfully added.'});
+                    const existingCount = results[0].count;
+
+                    if (existingCount === 0) {
+                        getConnectionAndExecute(req, res, (connection) => {
+                            connection.query(
+                                'INSERT INTO saves (userid, postname) VALUES (?, ?)',
+                                [userid, postname],
+                                (insertErr, insertResults) => {
+                                    if (insertErr) {
+                                        console.error('Error inserting new record:', insertErr);
+                                        res.status(500).send('Error inserting new record');
+                                    } else {
+                                        console.log('New chat message added to MySQL:', insertResults);
+                                        res.status(200).send({message: 'New chat message successfully added.'});
+                                    }
+                                }
+                            );
+                        });
+                    } else {
+                        // If the postname already exists, send a response indicating the duplication
+                        console.log('Duplicate postname detected:', postname);
+                        res.status(400).send({error: 'Duplicate postname. The post has already been saved.'});
+                    }
                 }
             }
         );
     });
 });
+
 
 app.get('/api/post/get/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
