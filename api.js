@@ -887,9 +887,12 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
+    const {userid, postname} = req.body;
+
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+            'INSERT INTO saves (userid, postname) VALUES (?, ?)',
+            [userid, postname],
             (err, results) => {
                 if (err) {
                     console.error('Error retrieving records:', err);
