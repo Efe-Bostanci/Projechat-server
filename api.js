@@ -892,20 +892,20 @@ app.post('/api/post/save', (req, res) => {
     // Check if the postname already exists in the database
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'SELECT COUNT(*) as count FROM saves WHERE postname = ?',
-            [postname],
+            'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
+            [postname, userid],
             (err, results) => {
                 if (err) {
-                    console.error('Error checking for existing records:', err);
-                    res.status(500).send('Error checking for existing records');
+                    console.error('Error checking for existing posts:', err);
+                    res.status(500).send('Error checking for existing posts');
                 } else {
-                    const existingCount = results[0].count;
+                    if (results.length > 0) {
+                        const postid = results[0].postid;
 
-                    if (existingCount === 0) {
                         getConnectionAndExecute(req, res, (connection) => {
                             connection.query(
-                                'INSERT INTO saves (userid, postname) VALUES (?, ?)',
-                                [userid, postname],
+                                'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                                [userid, postid],
                                 (insertErr, insertResults) => {
                                     if (insertErr) {
                                         console.error('Error inserting new record:', insertErr);
@@ -918,9 +918,9 @@ app.post('/api/post/save', (req, res) => {
                             );
                         });
                     } else {
-                        // If the postname already exists, send a response indicating the duplication
-                        console.log('Duplicate postname detected:', postname);
-                        res.status(400).send({error: 'Duplicate postname. The post has already been saved.'});
+                        // If the post does not exist, send a response indicating it
+                        console.log('Post not found:', postname);
+                        res.status(404).send({error: 'Post not found.'});
                     }
                 }
             }
