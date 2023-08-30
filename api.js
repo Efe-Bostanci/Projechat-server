@@ -905,7 +905,7 @@ app.post('/api/post/save', (req, res) => {
                         // Insert the userid and postid into the saves table
                         getConnectionAndExecute(req, res, (connection) => {
                             connection.query(
-                                'INSERT INTO saves (userid, postname) VALUES (?, ?)',
+                                'INSERT INTO saves (userid, postid) VALUES (?, ?)',
                                 [userid, postid],
                                 (insertErr, insertResults) => {
                                     if (insertErr) {
@@ -928,8 +928,6 @@ app.post('/api/post/save', (req, res) => {
         );
     });
 });
-
-
 
 app.get('/api/post/get/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
