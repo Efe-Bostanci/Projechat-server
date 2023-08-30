@@ -887,7 +887,7 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
-    const { userid, postname } = req.body;
+    const {userid, postname} = req.body;
 
     // Check if the postname and userid combination exists in the posts table
     getConnectionAndExecute(req, res, (connection) => {
@@ -913,7 +913,7 @@ app.post('/api/post/save', (req, res) => {
                                         res.status(500).send('Error inserting new record');
                                     } else {
                                         console.log('New chat message added to MySQL:', insertResults);
-                                        res.status(200).send({ message: 'New chat message successfully added.' });
+                                        res.status(200).send({message: 'New chat message successfully added.'});
                                     }
                                 }
                             );
@@ -921,8 +921,42 @@ app.post('/api/post/save', (req, res) => {
                     } else {
                         // If the post with the given name and userid does not exist, send an error response
                         console.log('Post not found:', postname);
-                        res.status(404).send({ error: 'Post not found.' });
+                        res.status(404).send({error: 'Post not found.'});
                     }
+                }
+            }
+        );
+    });
+});
+
+app.get('/api/post/savelist', (req, res) => {
+    const {userid} = req.query;
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT postid FROM saves WHERE userid = ?',
+            [userid],
+            (err, results) => {
+                if (err) {
+                    console.error('Error getting saved posts:', err);
+                    res.status(500).json({error: 'Error getting saved posts'});
+                } else {
+                    const postIds = results.map(row => row.postid);
+
+                    getConnectionAndExecute(req, res, (connection) => {
+                        connection.query(
+                            'SELECT * FROM posts WHERE postid IN (?)',
+                            [postIds],
+                            (postErr, postResults) => {
+                                if (postErr) {
+                                    console.error('Error getting posts:', postErr);
+                                    res.status(500).json({error: 'Error getting posts'});
+                                } else {
+                                    res.status(200).json(postResults);
+                                }
+                            }
+                        );
+                    });
                 }
             }
         );
