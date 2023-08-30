@@ -887,9 +887,9 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
-    const {userid, postname} = req.body;
+    const { userid, postname } = req.body;
 
-    // Check if the postname already exists in the database
+    // Check if the postname and userid combination exists in the posts table
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
@@ -902,9 +902,10 @@ app.post('/api/post/save', (req, res) => {
                     if (results.length > 0) {
                         const postid = results[0].postid;
 
+                        // Insert the userid and postid into the saves table
                         getConnectionAndExecute(req, res, (connection) => {
                             connection.query(
-                                'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                                'INSERT INTO saves (userid, postname) VALUES (?, ?)',
                                 [userid, postid],
                                 (insertErr, insertResults) => {
                                     if (insertErr) {
@@ -912,21 +913,22 @@ app.post('/api/post/save', (req, res) => {
                                         res.status(500).send('Error inserting new record');
                                     } else {
                                         console.log('New chat message added to MySQL:', insertResults);
-                                        res.status(200).send({message: 'New chat message successfully added.'});
+                                        res.status(200).send({ message: 'New chat message successfully added.' });
                                     }
                                 }
                             );
                         });
                     } else {
-                        // If the post does not exist, send a response indicating it
+                        // If the post with the given name and userid does not exist, send an error response
                         console.log('Post not found:', postname);
-                        res.status(404).send({error: 'Post not found.'});
+                        res.status(404).send({ error: 'Post not found.' });
                     }
                 }
             }
         );
     });
 });
+
 
 
 app.get('/api/post/get/all', (req, res) => {
