@@ -889,7 +889,6 @@ app.post('/api/post/delete', (req, res) => {
 app.post('/api/post/save', (req, res) => {
     const {userid, postname} = req.body;
 
-    // Check if the postname and userid combination exists in the posts table
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
@@ -902,7 +901,6 @@ app.post('/api/post/save', (req, res) => {
                     if (results.length > 0) {
                         const postid = results[0].postid;
 
-                        // Insert the userid and postid into the saves table
                         getConnectionAndExecute(req, res, (connection) => {
                             connection.query(
                                 'INSERT INTO saves (userid, postid) VALUES (?, ?)',
@@ -919,7 +917,6 @@ app.post('/api/post/save', (req, res) => {
                             );
                         });
                     } else {
-                        // If the post with the given name and userid does not exist, send an error response
                         console.log('Post not found:', postname);
                         res.status(404).send({error: 'Post not found.'});
                     }
@@ -979,6 +976,27 @@ app.get('/api/post/get/all', (req, res) => {
         );
     });
 });
+
+app.get('/api/post/get/page/all', (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = 15;
+    const startIndex = (page - 1) * pageSize;
+
+    const query = 'SELECT * FROM posts LIMIT ?, ?';
+
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(query, [startIndex, pageSize], (err, results) => {
+            if (err) {
+                console.error('MySQL query error:', err);
+                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+            } else {
+                console.log('Retrieved records:', results);
+                res.status(200).send(results);
+            }
+        });
+    });
+});
+
 
 app.get('/api/post/get/id', (req, res) => {
     const userid = req.query.userid;
