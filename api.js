@@ -900,6 +900,7 @@ app.post('/api/post/save', (req, res) => {
 
             // 1. Gelen postname ve userid'yi al
             // 2. "posts" tablosunda arama yap
+            getConnectionAndExecute(req, res, (connection) => {
             connection.query(
                 'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
                 [postname, userid],
@@ -916,51 +917,56 @@ app.post('/api/post/save', (req, res) => {
                         postid = results[0].postid;
 
                         // 4. "saves" tablosunda ilgili kaydı sil
-                        connection.query(
-                            'DELETE FROM saves WHERE postid = ? AND userid = ?',
-                            [postid, userid],
-                            (err) => {
-                                if (err) {
-                                    console.error('Error deleting record:', err);
-                                    res.status(500).send('Error deleting record');
-                                    connection.rollback();
-                                    return;
-                                }
-
-                                // 5. "saves" tablosuna yeni kayıt ekle
-                                connection.query(
-                                    'INSERT INTO saves (userid, postid) VALUES (?, ?)',
-                                    [userid, postid],
-                                    (err) => {
-                                        if (err) {
-                                            console.error('Error inserting new record:', err);
-                                            res.status(500).send('Error inserting new record');
-                                            connection.rollback();
-                                            return;
-                                        }
-
-                                        connection.commit((err) => {
-                                            if (err) {
-                                                console.error('Transaction commit error:', err);
-                                                res.status(500).send('Error committing transaction');
-                                                connection.rollback();
-                                                return;
-                                            }
-
-                                            console.log('Transaction committed successfully');
-                                            res.status(200).send({ message: 'Transaction committed successfully' });
-                                        });
+                        getConnectionAndExecute(req, res, (connection) => {
+                            connection.query(
+                                'DELETE FROM saves WHERE postid = ? AND userid = ?',
+                                [postid, userid],
+                                (err) => {
+                                    if (err) {
+                                        console.error('Error deleting record:', err);
+                                        res.status(500).send('Error deleting record');
+                                        connection.rollback();
+                                        return;
                                     }
-                                );
-                            }
-                        );
+
+                                    // 5. "saves" tablosuna yeni kayıt ekle
+                                    getConnectionAndExecute(req, res, (connection) => {
+                                        connection.query(
+                                            'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                                            [userid, postid],
+                                            (err) => {
+                                                if (err) {
+                                                    console.error('Error inserting new record:', err);
+                                                    res.status(500).send('Error inserting new record');
+                                                    connection.rollback();
+                                                    return;
+                                                }
+
+                                                connection.commit((err) => {
+                                                    if (err) {
+                                                        console.error('Transaction commit error:', err);
+                                                        res.status(500).send('Error committing transaction');
+                                                        connection.rollback();
+                                                        return;
+                                                    }
+
+                                                    console.log('Transaction committed successfully');
+                                                    res.status(200).send({message: 'Transaction committed successfully'});
+                                                });
+                                            }
+                                        );
+                                    });
+                                }
+                            );
+                        });
                     } else {
                         console.log('Post not found:', postname);
-                        res.status(404).send({ error: 'Post not found.' });
+                        res.status(404).send({error: 'Post not found.'});
                         connection.rollback();
                     }
                 }
             );
+        });
         });
     });
 });
