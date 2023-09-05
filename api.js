@@ -888,51 +888,80 @@ app.post('/api/post/delete', (req, res) => {
 
 app.post('/api/post/save', (req, res) => {
     const { userid, postname } = req.body;
+    let postid; // Post ID'sini saklamak için bir değişken
 
-    // getConnectionAndExecute işlevi içinde sorguları çalıştır
     getConnectionAndExecute(req, res, (connection) => {
-        connection.query(
-            'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
-            [postname, userid],
-            (err, results) => {
-                if (err) {
-                    console.error('Error searching for existing posts:', err);
-                    return res.status(500).send('Error searching for existing posts');
-                }
-
-                if (results.length > 0) {
-                    const postid = results[0].postid;
-
-                    connection.query(
-                        'DELETE FROM saves WHERE userid = ? AND postid = ?',
-                        [userid, postid],
-                        (deleteErr, deleteResults) => {
-                            if (deleteErr) {
-                                console.error('Error deleting record from saves:', deleteErr);
-                                return res.status(500).send('Error deleting record from saves');
-                            }
-
-                            connection.query(
-                                'INSERT INTO saves (userid, postid) VALUES (?, ?)',
-                                [userid, postid],
-                                (insertErr, insertResults) => {
-                                    if (insertErr) {
-                                        console.error('Error inserting new record into saves:', insertErr);
-                                        return res.status(500).send('Error inserting new record into saves');
-                                    }
-
-                                    console.log('New record added to saves:', insertResults);
-                                    return res.status(200).send({ message: 'New record successfully added to saves.' });
-                                }
-                            );
-                        }
-                    );
-                } else {
-                    console.log('Post not found:', postname);
-                    return res.status(404).send({ error: 'Post not found.' });
-                }
+        connection.beginTransaction((err) => {
+            if (err) {
+                console.error('Transaction start error:', err);
+                res.status(500).send('Error starting transaction');
+                return;
             }
-        );
+
+            // 1. Gelen postname ve userid'yi al
+            // 2. "posts" tablosunda arama yap
+            connection.query(
+                'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
+                [postname, userid],
+                (err, results) => {
+                    if (err) {
+                        console.error('Error checking for existing posts:', err);
+                        res.status(500).send('Error checking for existing posts');
+                        connection.rollback();
+                        return;
+                    }
+
+                    if (results.length > 0) {
+                        // 3. Postun "postid" sini al
+                        postid = results[0].postid;
+
+                        // 4. "saves" tablosunda ilgili kaydı sil
+                        connection.query(
+                            'DELETE FROM saves WHERE postid = ? AND userid = ?',
+                            [postid, userid],
+                            (err) => {
+                                if (err) {
+                                    console.error('Error deleting record:', err);
+                                    res.status(500).send('Error deleting record');
+                                    connection.rollback();
+                                    return;
+                                }
+
+                                // 5. "saves" tablosuna yeni kayıt ekle
+                                connection.query(
+                                    'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                                    [userid, postid],
+                                    (err) => {
+                                        if (err) {
+                                            console.error('Error inserting new record:', err);
+                                            res.status(500).send('Error inserting new record');
+                                            connection.rollback();
+                                            return;
+                                        }
+
+                                        connection.commit((err) => {
+                                            if (err) {
+                                                console.error('Transaction commit error:', err);
+                                                res.status(500).send('Error committing transaction');
+                                                connection.rollback();
+                                                return;
+                                            }
+
+                                            console.log('Transaction committed successfully');
+                                            res.status(200).send({ message: 'Transaction committed successfully' });
+                                        });
+                                    }
+                                );
+                            }
+                        );
+                    } else {
+                        console.log('Post not found:', postname);
+                        res.status(404).send({ error: 'Post not found.' });
+                        connection.rollback();
+                    }
+                }
+            );
+        });
     });
 });
 
