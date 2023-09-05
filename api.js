@@ -906,7 +906,7 @@ app.post('/api/post/save', (req, res) => {
                     // Kayıt bulunamadı, yeni kayıt ekle
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query(
-                            'INSERT INTO posts (userid, postname) VALUES (?, ?)',
+                            'INSERT INTO saves (userid, postname) VALUES (?, ?)',
                             [userid, postname],
                             (err, insertResults) => {
                                 if (err) {
@@ -925,7 +925,7 @@ app.post('/api/post/save', (req, res) => {
                     const postid = results[0].postid;
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query(
-                            'DELETE FROM posts WHERE postid = ?',
+                            'DELETE FROM saves WHERE postid = ?',
                             [postid],
                             (err, deleteResults) => {
                                 if (err) {
