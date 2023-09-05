@@ -916,7 +916,10 @@ app.post('/api/post/save', (req, res) => {
                                 }
                             );
                         });
-                    } 
+                    } else {
+                        console.log('Post not found:', postname);
+                        res.status(404).send({error: 'Post not found.'});
+                    }
                 }
             }
         );
