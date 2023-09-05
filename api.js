@@ -889,8 +889,8 @@ app.post('/api/post/delete', (req, res) => {
 app.post('/api/post/save', (req, res) => {
     const { userid, postname } = req.body;
 
+    // Adım 2: "posts" tablosunda arama yap
     getConnectionAndExecute(req, res, (connection) => {
-        // Adım 2: "posts" tablosunda ilgili postu ara
         connection.query(
             'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
             [postname, userid],
@@ -903,17 +903,18 @@ app.post('/api/post/save', (req, res) => {
                     return;
                 }
 
-                let postid = null; // Adım 3: postid'yi null olarak başlat
+                if (results.length === 0) {
+                    // Kayıt bulunamadı, hata döndür
+                    console.log('Post not found:', postname);
+                    res.status(404).json({ error: 'Post not found' });
+                } else {
+                    // Adım 3: Postid'yi al ve akılda tut
+                    const postid = results[0].postid;
 
-                if (results.length > 0) {
-                    postid = results[0].postid; // Post bulunursa postid'yi ayarla
-                }
-
-                // Adım 4: Eğer postid ve userid "saves" tablosunda kayıtlı ise, kaydı sil
-                if (postid) {
+                    // Adım 4: Eğer "saves" tablosunda kayıtlı ise, kaydı sil
                     connection.query(
-                        'DELETE FROM saves WHERE userid = ? AND postid = ?',
-                        [userid, postid],
+                        'DELETE FROM saves WHERE postid = ? AND userid = ?',
+                        [postid, userid],
                         (err, deleteResults) => {
                             if (err) {
                                 console.error('Error deleting existing record:', err);
@@ -921,12 +922,12 @@ app.post('/api/post/save', (req, res) => {
                                 return;
                             }
 
-                            console.log('Existing record deleted from "saves" table:', deleteResults);
-                            res.status(200).json({ message: 'Existing record successfully deleted' });
+                            console.log('Post deleted from saves table:', deleteResults);
+                            res.status(200).json({ message: 'Post successfully deleted from saves' });
                         }
                     );
-                } else {
-                    // Adım 5: Eğer postid ve userid "saves" tablosunda kayıtlı değilse, kaydı ekleyin
+
+                    // Adım 5: Eğer "saves" tablosunda kayıtlı değilse, kaydet
                     connection.query(
                         'INSERT INTO saves (userid, postid) VALUES (?, ?)',
                         [userid, postid],
@@ -937,8 +938,8 @@ app.post('/api/post/save', (req, res) => {
                                 return;
                             }
 
-                            console.log('New record added to "saves" table:', insertResults);
-                            res.status(200).json({ message: 'New record successfully added' });
+                            console.log('New post added to saves table:', insertResults);
+                            res.status(200).json({ message: 'New post successfully added to saves' });
                         }
                     );
                 }
