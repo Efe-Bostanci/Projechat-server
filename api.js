@@ -887,7 +887,7 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
-    const { userid, postname } = req.body;
+    const {userid, postname} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
@@ -898,15 +898,15 @@ app.post('/api/post/save', (req, res) => {
 
                 if (err) {
                     console.error('Error checking for existing posts:', err);
-                    res.status(500).json({ error: 'Error checking for existing posts' });
+                    res.status(500).json({error: 'Error checking for existing posts'});
                     return;
                 }
 
                 if (results.length === 0) {
-                    // Kayıt bulunamadı, yeni kayıt ekle
+
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query(
-                            'INSERT INTO saves (userid, postname) VALUES (?, ?)',
+                            'INSERT INTO posts (userid, postname) VALUES (?, ?)',
                             [userid, postname],
                             (err, insertResults) => {
                                 if (err) {
@@ -915,8 +915,24 @@ app.post('/api/post/save', (req, res) => {
                                     return;
                                 }
 
-                                console.log('New post added to MySQL:', insertResults);
-                                res.status(200).json({message: 'New post successfully added'});
+                                const postid = insertResults.insertId; // Yeni eklenen kaydın postid'sini al
+                                console.log('New post added to MySQL with postid:', postid);
+
+                                // Şimdi 'saves' tablosuna ekleyelim
+                                connection.query(
+                                    'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                                    [userid, postid],
+                                    (err, insertSavesResults) => {
+                                        if (err) {
+                                            console.error('Error inserting new record into saves:', err);
+                                            res.status(500).json({error: 'Error inserting new record into saves'});
+                                            return;
+                                        }
+
+                                        console.log('New post saved in "saves" table:', insertSavesResults);
+                                        res.status(200).json({message: 'New post successfully added'});
+                                    }
+                                );
                             }
                         );
                     });
