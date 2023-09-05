@@ -887,7 +887,7 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
-    const {userid, postname} = req.body;
+    const { userid, postname } = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
@@ -898,35 +898,53 @@ app.post('/api/post/save', (req, res) => {
 
                 if (err) {
                     console.error('Error checking for existing posts:', err);
-                    res.status(500).json({error: 'Error checking for existing posts'});
+                    res.status(500).json({ error: 'Error checking for existing posts' });
                     return;
                 }
 
                 if (results.length === 0) {
-                    console.log('Post not found:', postname);
-                    res.status(404).json({error: 'Post not found'});
-                    return;
+                    // Kayıt bulunamadı, yeni kayıt ekle
+                    getConnectionAndExecute(req, res, (connection) => {
+                        connection.query(
+                            'INSERT INTO posts (userid, postname) VALUES (?, ?)',
+                            [userid, postname],
+                            (err, insertResults) => {
+                                if (err) {
+                                    console.error('Error inserting new record:', err);
+                                    res.status(500).json({error: 'Error inserting new record'});
+                                    return;
+                                }
+
+                                console.log('New post added to MySQL:', insertResults);
+                                res.status(200).json({message: 'New post successfully added'});
+                            }
+                        );
+                    });
+                } else {
+                    // Kayıt var, DELETE ile sil
+                    const postid = results[0].postid;
+                    getConnectionAndExecute(req, res, (connection) => {
+                        connection.query(
+                            'DELETE FROM posts WHERE postid = ?',
+                            [postid],
+                            (err, deleteResults) => {
+                                if (err) {
+                                    console.error('Error deleting existing record:', err);
+                                    res.status(500).json({error: 'Error deleting existing record'});
+                                    return;
+                                }
+
+                                console.log('Post deleted from MySQL:', deleteResults);
+                                res.status(200).json({message: 'Post successfully deleted'});
+                            }
+                        );
+                    });
                 }
-
-                const postid = results[0].postid;
-                connection.query(
-                    'INSERT INTO saves (userid, postid) VALUES (?, ?)',
-                    [userid, postid],
-                    (err, insertResults) => {
-                        if (err) {
-                            console.error('Error inserting new record:', err);
-                            res.status(500).json({error: 'Error inserting new record'});
-                            return;
-                        }
-
-                        console.log('New chat message added to MySQL:', insertResults);
-                        res.status(200).json({message: 'New chat message successfully added'});
-                    }
-                );
             }
         );
     });
 });
+
 
 app.get('/api/post/savelist', (req, res) => {
     const {userid} = req.query;
