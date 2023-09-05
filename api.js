@@ -901,12 +901,6 @@ app.post('/api/post/save', (req, res) => {
                     console.error('Error checking for existing posts:', err);
                     res.status(500).json({ error: 'Error checking for existing posts' });
                     return;
-                }
-
-                if (results.length === 0) {
-                    // Kayıt bulunamadı, hata döndür
-                    console.log('Post not found:', postname);
-                    res.status(404).json({ error: 'Post not found' });
                 } else {
                     // Adım 3: Postid'yi al ve akılda tut
                     const postid = results[0].postid;
