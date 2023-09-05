@@ -904,7 +904,7 @@ app.post('/api/post/save', (req, res) => {
                 }
 
                 if (results.length === 0) {
-                    // Kayıt bulunamadı, hata döndür
+                    // Kayıt bulunamadı, yeni kayıt ekle
                     console.log('Post not found:', postname);
                     res.status(404).json({ error: 'Post not found' });
                 } else {
@@ -913,33 +913,47 @@ app.post('/api/post/save', (req, res) => {
 
                     // Adım 4: Eğer "saves" tablosunda kayıtlı ise, kaydı sil
                     connection.query(
-                        'DELETE FROM saves WHERE postid = ? AND userid = ?',
+                        'SELECT * FROM saves WHERE postid = ? AND userid = ?',
                         [postid, userid],
-                        (err, deleteResults) => {
+                        (err, saveResults) => {
                             if (err) {
-                                console.error('Error deleting existing record:', err);
-                                res.status(500).json({ error: 'Error deleting existing record' });
+                                console.error('Error checking for existing saves:', err);
+                                res.status(500).json({ error: 'Error checking for existing saves' });
                                 return;
                             }
 
-                            console.log('Post deleted from saves table:', deleteResults);
-                            res.status(200).json({ message: 'Post successfully deleted from saves' });
-                        }
-                    );
+                            if (saveResults.length > 0) {
+                                connection.query(
+                                    'DELETE FROM saves WHERE postid = ? AND userid = ?',
+                                    [postid, userid],
+                                    (err, deleteResults) => {
+                                        if (err) {
+                                            console.error('Error deleting existing record:', err);
+                                            res.status(500).json({ error: 'Error deleting existing record' });
+                                            return;
+                                        }
 
-                    // Adım 5: Eğer "saves" tablosunda kayıtlı değilse, kaydet
-                    connection.query(
-                        'INSERT INTO saves (userid, postid) VALUES (?, ?)',
-                        [userid, postid],
-                        (err, insertResults) => {
-                            if (err) {
-                                console.error('Error inserting new record:', err);
-                                res.status(500).json({ error: 'Error inserting new record' });
-                                return;
+                                        console.log('Post deleted from saves table:', deleteResults);
+                                        res.status(200).json({ message: 'Post successfully deleted from saves' });
+                                    }
+                                );
+                            } else {
+                                // Adım 5: Eğer "saves" tablosunda kayıtlı değilse, kaydet
+                                connection.query(
+                                    'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                                    [userid, postid],
+                                    (err, insertResults) => {
+                                        if (err) {
+                                            console.error('Error inserting new record:', err);
+                                            res.status(500).json({ error: 'Error inserting new record' });
+                                            return;
+                                        }
+
+                                        console.log('New post added to saves table:', insertResults);
+                                        res.status(200).json({ message: 'New post successfully added to saves' });
+                                    }
+                                );
                             }
-
-                            console.log('New post added to saves table:', insertResults);
-                            res.status(200).json({ message: 'New post successfully added to saves' });
                         }
                     );
                 }
@@ -947,6 +961,7 @@ app.post('/api/post/save', (req, res) => {
         );
     });
 });
+
 
 
 
