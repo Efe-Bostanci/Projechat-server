@@ -930,8 +930,8 @@ app.post('/api/post/save', (req, res) => {
                     // 5. Eğer postid ve username "saves" tablosunda kayıtlı değilse postid ve userid yi saves'e kaydet
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query(
-                            'INSERT INTO saves (userid, postname) VALUES (?, ?)',
-                            [userid, postname],
+                            'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                            [userid, postid],
                             (err, insertResults) => {
                                 if (err) {
                                     console.error('Error inserting new record into saves:', err);
