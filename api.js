@@ -888,63 +888,57 @@ app.post('/api/post/delete', (req, res) => {
 
 app.post('/api/post/save', (req, res) => {
     const { userid, postname } = req.body;
+    let postid;
 
-    // 1. Gelen postname ve userid'yi al
-
-    // 2. "posts" tablosunda arama yap
+    // 1) Gelen postname ve userid'yi al
+    // 2) "posts" tablosunda arama yap
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
             [postname, userid],
             (err, results) => {
-                connection.release();
-
                 if (err) {
                     console.error('Error checking for existing posts:', err);
                     res.status(500).json({ error: 'Error checking for existing posts' });
                     return;
                 }
 
-                // 3. Eğer "posts" tablosunda ilgili post bulunursa "postid" yi al
                 if (results.length > 0) {
-                    const postid = results[0].postid;
-
-                    // 4. Eğer postid ve username "saves" tablosunda kayıtlı ise o kaydı "saves" ten sil
-                    getConnectionAndExecute(req, res, (connection) => {
-                        connection.query(
-                            'DELETE FROM saves WHERE postid = ? AND userid = ?',
-                            [postid, userid],
-                            (err, deleteResults) => {
-                                if (err) {
-                                    console.error('Error deleting existing record from saves:', err);
-                                    res.status(500).json({error: 'Error deleting existing record from saves'});
-                                    return;
-                                }
-
-                                console.log('Record deleted from "saves" table:', deleteResults);
-                                res.status(200).json({message: 'Record successfully deleted from saves'});
-                            }
-                        );
-                    });
-                } else {
-                    // 5. Eğer postid ve username "saves" tablosunda kayıtlı değilse postid ve userid yi saves'e kaydet
-                    getConnectionAndExecute(req, res, (connection) => {
-                        connection.query(
-                            'INSERT INTO saves (userid, postid) VALUES (?, ?)',
-                            [userid, postid],
-                            (err, insertResults) => {
-                                if (err) {
-                                    console.error('Error inserting new record into saves:', err);
-                                    res.status(500).json({error: 'Error inserting new record into saves'});
-                                    return;
-                                }
-
-                                console.log('New record added to "saves" table:', insertResults);
-                                res.status(200).json({message: 'New record successfully added to saves'});
-                            }
-                        );
-                    });
+                    // 3) "posts" tablosunda ilgili post bulunursa "postid" yi al
+                    postid = results[0].postid;
                 }
+
+                // 4) Eğer postid ve userid "saves" tablosunda kayıtlı ise o kaydı "saves" ten sil
+                connection.query(
+                    'DELETE FROM saves WHERE postid = ? AND userid = ?',
+                    [postid, userid],
+                    (err, deleteResults) => {
+                        if (err) {
+                            console.error('Error deleting existing record from saves:', err);
+                            res.status(500).json({ error: 'Error deleting existing record from saves' });
+                            return;
+                        }
+
+                        // 5) Eğer postid ve userid "saves" tablosunda kayıtlı değilse postid ve userid'yi "saves" e kaydet
+                        if (results.length === 0) {
+                            connection.query(
+                                'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                                [userid, postid],
+                                (err, insertResults) => {
+                                    if (err) {
+                                        console.error('Error inserting new record into saves:', err);
+                                        res.status(500).json({ error: 'Error inserting new record into saves' });
+                                        return;
+                                    }
+
+                                    console.log('New post saved in "saves" table:', insertResults);
+                                }
+                            );
+                        }
+
+                        res.status(200).json({ message: 'Post processing completed' });
+                    }
+                );
             }
         );
     });
