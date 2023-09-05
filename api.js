@@ -889,6 +889,9 @@ app.post('/api/post/delete', (req, res) => {
 app.post('/api/post/save', (req, res) => {
     const { userid, postname } = req.body;
 
+    // 1. Gelen postname ve userid'yi al
+
+    // 2. "posts" tablosunda arama yap
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
@@ -902,84 +905,42 @@ app.post('/api/post/save', (req, res) => {
                     return;
                 }
 
-                if (results.length === 0) {
+                // 3. Eğer "posts" tablosunda ilgili post bulunursa "postid" yi al
+                if (results.length > 0) {
+                    const postid = results[0].postid;
 
+                    // 4. Eğer postid ve username "saves" tablosunda kayıtlı ise o kaydı "saves" ten sil
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query(
-                            'INSERT INTO posts (userid, postname) VALUES (?, ?)',
-                            [userid, postname],
-                            (err, insertResults) => {
+                            'DELETE FROM saves WHERE postid = ? AND userid = ?',
+                            [postid, userid],
+                            (err, deleteResults) => {
                                 if (err) {
-                                    console.error('Error inserting new record:', err);
-                                    res.status(500).json({ error: 'Error inserting new record' });
+                                    console.error('Error deleting existing record from saves:', err);
+                                    res.status(500).json({error: 'Error deleting existing record from saves'});
                                     return;
                                 }
 
-                                const postid = insertResults.insertId; // Yeni eklenen kaydın postid'sini al
-                                console.log('New post added to MySQL with postid:', postid);
-
-                                // Şimdi 'saves' tablosuna ekleyelim
-                                connection.query(
-                                    'INSERT INTO saves (userid, postid) VALUES (?, ?)',
-                                    [userid, postid],
-                                    (err, insertSavesResults) => {
-                                        if (err) {
-                                            console.error('Error inserting new record into saves:', err);
-                                            res.status(500).json({ error: 'Error inserting new record into saves' });
-                                            return;
-                                        }
-
-                                        // Kaydı ekledikten sonra tüm bilgileri çekmek için yeni bir sorgu yapalım
-                                        connection.query(
-                                            'SELECT * FROM posts WHERE postid = ?',
-                                            [postid],
-                                            (err, postInfoResults) => {
-                                                if (err) {
-                                                    console.error('Error fetching post info:', err);
-                                                    res.status(500).json({ error: 'Error fetching post info' });
-                                                    return;
-                                                }
-
-                                                console.log('Fetched post info:', postInfoResults);
-                                                res.status(200).json({ message: 'New post successfully added', postInfo: postInfoResults });
-                                            }
-                                        );
-                                    }
-                                );
+                                console.log('Record deleted from "saves" table:', deleteResults);
+                                res.status(200).json({message: 'Record successfully deleted from saves'});
                             }
                         );
                     });
                 } else {
-                    // Kayıt var, DELETE ile sil
-                    const postid = results[0].postid;
+                    // 5. Eğer postid ve username "saves" tablosunda kayıtlı değilse postid ve userid yi saves'e kaydet
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query(
-                            'DELETE FROM saves WHERE postid = ?',
-                            [postid],
-                            (err, deleteResults) => {
+                            'INSERT INTO saves (userid, postname) VALUES (?, ?)',
+                            [userid, postname],
+                            (err, insertResults) => {
                                 if (err) {
-                                    console.error('Error deleting existing record:', err);
-                                    res.status(500).json({ error: 'Error deleting existing record' });
+                                    console.error('Error inserting new record into saves:', err);
+                                    res.status(500).json({error: 'Error inserting new record into saves'});
                                     return;
                                 }
 
-                                console.log('Post deleted from MySQL:', deleteResults);
-
-                                // Kaydı sildikten sonra tüm bilgileri çekmek için yeni bir sorgu yapalım
-                                connection.query(
-                                    'SELECT * FROM posts WHERE postid = ?',
-                                    [postid],
-                                    (err, postInfoResults) => {
-                                        if (err) {
-                                            console.error('Error fetching post info:', err);
-                                            res.status(500).json({ error: 'Error fetching post info' });
-                                            return;
-                                        }
-
-                                        console.log('Fetched post info:', postInfoResults);
-                                        res.status(200).json({ message: 'Post successfully deleted', postInfo: postInfoResults });
-                                    }
-                                );
+                                console.log('New record added to "saves" table:', insertResults);
+                                res.status(200).json({message: 'New record successfully added to saves'});
                             }
                         );
                     });
@@ -988,7 +949,6 @@ app.post('/api/post/save', (req, res) => {
         );
     });
 });
-
 
 
 app.get('/api/post/savelist', (req, res) => {
