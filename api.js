@@ -889,44 +889,50 @@ app.post('/api/post/delete', (req, res) => {
 app.post('/api/post/save', (req, res) => {
     const { userid, postname } = req.body;
 
-    // 1) Gelen postname ve userid'yi al
-
-    // 2) Gelen bilgilerle "posts" tablosunda arama yap
-    const searchQuery = 'SELECT postid FROM posts WHERE postname = ? AND userid = ?';
-    connection.query(searchQuery, [postname, userid], (err, results) => {
-        if (err) {
-            console.error('Error searching for existing posts:', err);
-            return res.status(500).send('Error searching for existing posts');
-        }
-
-        // 3) "posts" tablosunda ilgili post bulunursa "postid" yi al
-        if (results.length > 0) {
-            const postid = results[0].postid;
-
-            // 4) Eğer postid ve userid "saves" tablosunda kayıtlı ise kaydı "saves" ten sil
-            const deleteQuery = 'DELETE FROM saves WHERE userid = ? AND postid = ?';
-            connection.query(deleteQuery, [userid, postid], (deleteErr, deleteResults) => {
-                if (deleteErr) {
-                    console.error('Error deleting record from saves:', deleteErr);
-                    return res.status(500).send('Error deleting record from saves');
+    // getConnectionAndExecute işlevi içinde sorguları çalıştır
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
+            [postname, userid],
+            (err, results) => {
+                if (err) {
+                    console.error('Error searching for existing posts:', err);
+                    return res.status(500).send('Error searching for existing posts');
                 }
 
-                // 5) Eğer postid ve userid "saves" tablosunda kayıtlı değilse, postid ve userid'yi "saves" e kaydet
-                const insertQuery = 'INSERT INTO saves (userid, postid) VALUES (?, ?)';
-                connection.query(insertQuery, [userid, postid], (insertErr, insertResults) => {
-                    if (insertErr) {
-                        console.error('Error inserting new record into saves:', insertErr);
-                        return res.status(500).send('Error inserting new record into saves');
-                    }
+                if (results.length > 0) {
+                    const postid = results[0].postid;
 
-                    console.log('New record added to saves:', insertResults);
-                    return res.status(200).send({ message: 'New record successfully added to saves.' });
-                });
-            });
-        } else {
-            console.log('Post not found:', postname);
-            return res.status(404).send({ error: 'Post not found.' });
-        }
+                    connection.query(
+                        'DELETE FROM saves WHERE userid = ? AND postid = ?',
+                        [userid, postid],
+                        (deleteErr, deleteResults) => {
+                            if (deleteErr) {
+                                console.error('Error deleting record from saves:', deleteErr);
+                                return res.status(500).send('Error deleting record from saves');
+                            }
+
+                            connection.query(
+                                'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                                [userid, postid],
+                                (insertErr, insertResults) => {
+                                    if (insertErr) {
+                                        console.error('Error inserting new record into saves:', insertErr);
+                                        return res.status(500).send('Error inserting new record into saves');
+                                    }
+
+                                    console.log('New record added to saves:', insertResults);
+                                    return res.status(200).send({ message: 'New record successfully added to saves.' });
+                                }
+                            );
+                        }
+                    );
+                } else {
+                    console.log('Post not found:', postname);
+                    return res.status(404).send({ error: 'Post not found.' });
+                }
+            }
+        );
     });
 });
 
