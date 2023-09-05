@@ -887,7 +887,7 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
-    const {userid, postname} = req.body;
+    const { userid, postname } = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
@@ -898,7 +898,7 @@ app.post('/api/post/save', (req, res) => {
 
                 if (err) {
                     console.error('Error checking for existing posts:', err);
-                    res.status(500).json({error: 'Error checking for existing posts'});
+                    res.status(500).json({ error: 'Error checking for existing posts' });
                     return;
                 }
 
@@ -911,7 +911,7 @@ app.post('/api/post/save', (req, res) => {
                             (err, insertResults) => {
                                 if (err) {
                                     console.error('Error inserting new record:', err);
-                                    res.status(500).json({error: 'Error inserting new record'});
+                                    res.status(500).json({ error: 'Error inserting new record' });
                                     return;
                                 }
 
@@ -925,12 +925,25 @@ app.post('/api/post/save', (req, res) => {
                                     (err, insertSavesResults) => {
                                         if (err) {
                                             console.error('Error inserting new record into saves:', err);
-                                            res.status(500).json({error: 'Error inserting new record into saves'});
+                                            res.status(500).json({ error: 'Error inserting new record into saves' });
                                             return;
                                         }
 
-                                        console.log('New post saved in "saves" table:', insertSavesResults);
-                                        res.status(200).json({message: 'New post successfully added'});
+                                        // Kaydı ekledikten sonra tüm bilgileri çekmek için yeni bir sorgu yapalım
+                                        connection.query(
+                                            'SELECT * FROM posts WHERE postid = ?',
+                                            [postid],
+                                            (err, postInfoResults) => {
+                                                if (err) {
+                                                    console.error('Error fetching post info:', err);
+                                                    res.status(500).json({ error: 'Error fetching post info' });
+                                                    return;
+                                                }
+
+                                                console.log('Fetched post info:', postInfoResults);
+                                                res.status(200).json({ message: 'New post successfully added', postInfo: postInfoResults });
+                                            }
+                                        );
                                     }
                                 );
                             }
@@ -946,12 +959,27 @@ app.post('/api/post/save', (req, res) => {
                             (err, deleteResults) => {
                                 if (err) {
                                     console.error('Error deleting existing record:', err);
-                                    res.status(500).json({error: 'Error deleting existing record'});
+                                    res.status(500).json({ error: 'Error deleting existing record' });
                                     return;
                                 }
 
                                 console.log('Post deleted from MySQL:', deleteResults);
-                                res.status(200).json({message: 'Post successfully deleted'});
+
+                                // Kaydı sildikten sonra tüm bilgileri çekmek için yeni bir sorgu yapalım
+                                connection.query(
+                                    'SELECT * FROM posts WHERE postid = ?',
+                                    [postid],
+                                    (err, postInfoResults) => {
+                                        if (err) {
+                                            console.error('Error fetching post info:', err);
+                                            res.status(500).json({ error: 'Error fetching post info' });
+                                            return;
+                                        }
+
+                                        console.log('Fetched post info:', postInfoResults);
+                                        res.status(200).json({ message: 'Post successfully deleted', postInfo: postInfoResults });
+                                    }
+                                );
                             }
                         );
                     });
@@ -960,6 +988,7 @@ app.post('/api/post/save', (req, res) => {
         );
     });
 });
+
 
 
 app.get('/api/post/savelist', (req, res) => {
