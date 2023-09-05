@@ -887,86 +887,55 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
-    const { userid, postname } = req.body;
-    let postid; // Post ID'sini saklamak için bir değişken
+    const { postname, userid } = req.body;
 
+    // getConnectionAndExecute fonksiyonunu kullanarak veritabanı işlemini gerçekleştirin
     getConnectionAndExecute(req, res, (connection) => {
-        connection.beginTransaction((err) => {
-            if (err) {
-                console.error('Transaction start error:', err);
-                res.status(500).send('Error starting transaction');
-                return;
-            }
+        // "posts" tablosunda ilgili postu arayın
+        connection.query('SELECT postid FROM posts WHERE postname = ? AND userid = ?', [postname, userid], (error, results) => {
+            if (error) {
+                console.error('Sorgu hatası: ' + error.message);
+                res.status(500).json({ success: false, message: 'Veritabanı hatası' });
+            } else {
+                if (results.length > 0) {
+                    // Post bulundu, postid'yi değişkene kaydet
+                    const postid = results[0].postid;
 
-            // 1. Gelen postname ve userid'yi al
-            // 2. "posts" tablosunda arama yap
-            getConnectionAndExecute(req, res, (connection) => {
-            connection.query(
-                'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
-                [postname, userid],
-                (err, results) => {
-                    if (err) {
-                        console.error('Error checking for existing posts:', err);
-                        res.status(500).send('Error checking for existing posts');
-                        connection.rollback();
-                        return;
-                    }
-
-                    if (results.length > 0) {
-                        // 3. Postun "postid" sini al
-                        postid = results[0].postid;
-
-                        // 4. "saves" tablosunda ilgili kaydı sil
-                        getConnectionAndExecute(req, res, (connection) => {
-                            connection.query(
-                                'DELETE FROM saves WHERE postid = ? AND userid = ?',
-                                [postid, userid],
-                                (err) => {
-                                    if (err) {
-                                        console.error('Error deleting record:', err);
-                                        res.status(500).send('Error deleting record');
-                                        connection.rollback();
-                                        return;
+                    // "saves" tablosunda belirtilen postid ve userid ile kayıt var mı kontrol et
+                    connection.query('SELECT * FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error, saveResults) => {
+                        if (error) {
+                            console.error('Sorgu hatası: ' + error.message);
+                            res.status(500).json({ success: false, message: 'Veritabanı hatası' });
+                        } else {
+                            if (saveResults.length > 0) {
+                                // Kayıt varsa, bu kaydı "saves" tablosundan sil
+                                connection.query('DELETE FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error) => {
+                                    if (error) {
+                                        console.error('Silme hatası: ' + error.message);
+                                        res.status(500).json({ success: false, message: 'Veritabanı hatası' });
+                                    } else {
+                                        console.log('Kayıt silindi.');
+                                        res.json({ success: true, message: 'Gönderi kaydedildi ve kayıt silindi.' });
                                     }
-
-                                    // 5. "saves" tablosuna yeni kayıt ekle
-                                    getConnectionAndExecute(req, res, (connection) => {
-                                        connection.query(
-                                            'INSERT INTO saves (userid, postid) VALUES (?, ?)',
-                                            [userid, postid],
-                                            (err) => {
-                                                if (err) {
-                                                    console.error('Error inserting new record:', err);
-                                                    res.status(500).send('Error inserting new record');
-                                                    connection.rollback();
-                                                    return;
-                                                }
-
-                                                connection.commit((err) => {
-                                                    if (err) {
-                                                        console.error('Transaction commit error:', err);
-                                                        res.status(500).send('Error committing transaction');
-                                                        connection.rollback();
-                                                        return;
-                                                    }
-
-                                                    console.log('Transaction committed successfully');
-                                                    res.status(200).send({message: 'Transaction committed successfully'});
-                                                });
-                                            }
-                                        );
-                                    });
-                                }
-                            );
-                        });
-                    } else {
-                        console.log('Post not found:', postname);
-                        res.status(404).send({error: 'Post not found.'});
-                        connection.rollback();
-                    }
+                                });
+                            } else {
+                                // Kayıt yoksa, bu bilgileri "saves" tablosuna ekle
+                                connection.query('INSERT INTO saves (postid, userid) VALUES (?, ?)', [postid, userid], (error) => {
+                                    if (error) {
+                                        console.error('Ekleme hatası: ' + error.message);
+                                        res.status(500).json({ success: false, message: 'Veritabanı hatası' });
+                                    } else {
+                                        console.log('Yeni kayıt eklendi.');
+                                        res.json({ success: true, message: 'Gönderi kaydedildi ve yeni kayıt eklendi.' });
+                                    }
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    res.status(404).json({ success: false, message: 'Belirtilen post bulunamadı.' });
                 }
-            );
-        });
+            }
         });
     });
 });
