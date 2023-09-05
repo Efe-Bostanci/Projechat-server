@@ -894,33 +894,35 @@ app.post('/api/post/save', (req, res) => {
             'SELECT postid FROM posts WHERE postname = ? AND userid = ?',
             [postname, userid],
             (err, results) => {
+                connection.release();
+
                 if (err) {
                     console.error('Error checking for existing posts:', err);
-                    res.status(500).send('Error checking for existing posts');
-                } else {
-                    if (results.length > 0) {
-                        const postid = results[0].postid;
-
-                        getConnectionAndExecute(req, res, (connection) => {
-                            connection.query(
-                                'INSERT INTO saves (userid, postid) VALUES (?, ?)',
-                                [userid, postid],
-                                (insertErr, insertResults) => {
-                                    if (insertErr) {
-                                        console.error('Error inserting new record:', insertErr);
-                                        res.status(500).send('Error inserting new record');
-                                    } else {
-                                        console.log('New chat message added to MySQL:', insertResults);
-                                        res.status(200).send({message: 'New chat message successfully added.'});
-                                    }
-                                }
-                            );
-                        });
-                    } else {
-                        console.log('Post not found:', postname);
-                        res.status(404).send({error: 'Post not found.'});
-                    }
+                    res.status(500).json({error: 'Error checking for existing posts'});
+                    return;
                 }
+
+                if (results.length === 0) {
+                    console.log('Post not found:', postname);
+                    res.status(404).json({error: 'Post not found'});
+                    return;
+                }
+
+                const postid = results[0].postid;
+                connection.query(
+                    'INSERT INTO saves (userid, postid) VALUES (?, ?)',
+                    [userid, postid],
+                    (err, insertResults) => {
+                        if (err) {
+                            console.error('Error inserting new record:', err);
+                            res.status(500).json({error: 'Error inserting new record'});
+                            return;
+                        }
+
+                        console.log('New chat message added to MySQL:', insertResults);
+                        res.status(200).json({message: 'New chat message successfully added'});
+                    }
+                );
             }
         );
     });
