@@ -985,11 +985,39 @@ app.get('/api/post/savelist', (req, res) => {
     });
 });
 
+// Takip edilen kullanıcıların postlarını tarih sırasına göre getiren endpoint
 app.get('/api/post/get/page/follows', (req, res) => {
     const {userid} = req.query;
 
-    getConnectionAndExecute(req, res, (connection) => {
+    // Takip edilen kullanıcıların listesini almak için SQL sorgusu
+    const followedUsersQuery = `SELECT followedid FROM follow WHERE followerid = ?;`;
 
+    // Takip edilen kullanıcıların postlarını tarih sırasına göre almak için SQL sorgusu
+    const getPostsQuery = `SELECT * FROM posts WHERE userid IN (SELECT followedid FROM follow WHERE followerid = ?)
+    ORDER BY posttime DESC;`; //tarihe göre azalan
+
+    // Takip edilen kullanıcıların listesini al
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(followedUsersQuery, [userid], (err, followedUsers) => {
+            if (err) {
+                console.error('Takip edilen kullanıcıları alırken bir hata oluştu:', err);
+                res.status(500).json({error: 'Sunucu hatası'});
+                return;
+            }
+
+            // Takip edilen kullanıcıların postlarını al
+            getConnectionAndExecute(req, res, (connection) => {
+                connection.query(getPostsQuery, [userid], (err, posts) => {
+                    if (err) {
+                        console.error('Takip edilen kullanıcıların postlarını alırken bir hata oluştu:', err);
+                        res.status(500).json({error: 'Sunucu hatası'});
+                        return;
+                    }
+
+                    res.json(posts); // Postları istemciye gönder
+                });
+            });
+        });
     });
 });
 
