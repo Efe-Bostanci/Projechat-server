@@ -886,13 +886,15 @@ app.post('/api/post/delete', (req, res) => {
     });
 });
 
+//sadece kendi postlarını kaydediyor
+
 app.post('/api/post/save', (req, res) => {
     const { postname, userid } = req.body;
 
     // getConnectionAndExecute fonksiyonunu kullanarak veritabanı işlemini gerçekleştirin
     getConnectionAndExecute(req, res, (connection) => {
         // "posts" tablosunda ilgili postu arayın
-        connection.query('SELECT postid FROM posts WHERE postname = ? AND userid = ?', [postname, userid], (error, results) => {
+        connection.query('SELECT postid FROM posts WHERE postname = ?', [postname, userid], (error, results) => {
             if (error) {
                 console.error('Sorgu hatası: ' + error.message);
                 res.status(500).json({ success: false, message: 'Veritabanı hatası' });
