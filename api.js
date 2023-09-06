@@ -985,22 +985,23 @@ app.get('/api/post/savelist', (req, res) => {
     });
 });
 
-// Takip edilen kullanıcıların postlarını sayfalama ile getiren endpoint
+// Takip edilen kullanıcıların postlarını tarih sırasına göre getiren endpoint
 app.get('/api/post/get/page/follows', (req, res) => {
-    const { userid, page } = req.query;
-    const pageSize = 15;
-    const startIndex = (page - 1) * pageSize;
+    const { userid, page, pageSize } = req.query;
+
+    const parsedPage = parseInt(page) || 1;
+    const parsedPageSize = parseInt(pageSize) || 15;
+    const startIndex = (parsedPage - 1) * parsedPageSize;
 
     // Takip edilen kullanıcıların listesini almak için SQL sorgusu
     const followedUsersQuery = `SELECT followedid FROM follow WHERE followerid = ?;`;
 
-    // Takip edilen kullanıcıların postlarını sayfalama ile almak için SQL sorgusu
+    // Takip edilen kullanıcıların postlarını tarih sırasına göre almak için SQL sorgusu
     const getPostsQuery = `
         SELECT * FROM posts
         WHERE userid IN (SELECT followedid FROM follow WHERE followerid = ?)
         ORDER BY posttime DESC
-        LIMIT ?, ?;
-    `;
+        LIMIT ?, ?;`; // Tarihe göre azalan sıralama ve sayfalama
 
     // Takip edilen kullanıcıların listesini al
     getConnectionAndExecute(req, res, (connection) => {
@@ -1011,22 +1012,21 @@ app.get('/api/post/get/page/follows', (req, res) => {
                 return;
             }
 
-            // Takip edilen kullanıcıların postlarını sayfalama ile al
+            // Takip edilen kullanıcıların postlarını al ve sayfalama uygula
             getConnectionAndExecute(req, res, (connection) => {
-                connection.query(getPostsQuery, [userid, startIndex, pageSize], (err, posts) => {
+                connection.query(getPostsQuery, [userid, startIndex, parsedPageSize], (err, posts) => {
                     if (err) {
                         console.error('Takip edilen kullanıcıların postlarını alırken bir hata oluştu:', err);
                         res.status(500).json({ error: 'Sunucu hatası' });
                         return;
                     }
 
-                    res.json(posts); // Sayfa numarasına göre postları istemciye gönder
+                    res.json(posts); // Sayfalama sonuçlarını istemciye gönder
                 });
             });
         });
     });
 });
-
 
 app.get('/api/post/get/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
