@@ -952,8 +952,9 @@ app.post('/api/post/save', (req, res) => {
 });
 
 app.get('/api/post/savelist', (req, res) => {
-    const {userid} = req.query;
+    const { userid } = req.query;
 
+    // Kullanıcının kaydedilen gönderi ID'lerini al
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'SELECT postid FROM saves WHERE userid = ?',
@@ -961,10 +962,11 @@ app.get('/api/post/savelist', (req, res) => {
             (err, results) => {
                 if (err) {
                     console.error('Error getting saved posts:', err);
-                    res.status(500).json({error: 'Error getting saved posts'});
+                    res.status(500).json({ error: 'Error getting saved posts' });
                 } else {
                     const postIds = results.map(row => row.postid);
 
+                    // Kullanıcının kaydettiği gönderi ID'lerini kullanarak gönderi bilgilerini al
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query(
                             'SELECT * FROM posts WHERE postid IN (?)',
@@ -972,9 +974,29 @@ app.get('/api/post/savelist', (req, res) => {
                             (postErr, postResults) => {
                                 if (postErr) {
                                     console.error('Error getting posts:', postErr);
-                                    res.status(500).json({error: 'Error getting posts'});
+                                    res.status(500).json({ error: 'Error getting posts' });
                                 } else {
-                                    res.status(200).json(postResults);
+                                    // Kullanıcı adı ve profil fotoğrafını almak için "users" tablosunu sorgula
+                                    getConnectionAndExecute(req, res, (connection) => {
+                                        connection.query(
+                                            'SELECT username, profilephoto FROM users WHERE userid = ?',
+                                            [userid],
+                                            (userErr, userResults) => {
+                                                if (userErr) {
+                                                    console.error('Error getting user info:', userErr);
+                                                    res.status(500).json({ error: 'Error getting user info' });
+                                                } else {
+                                                    // Kullanıcının adı ve profil fotoğrafı ile gönderi bilgilerini birleştir
+                                                    const responseData = postResults.map(post => ({
+                                                        ...post,
+                                                        username: userResults[0].username,
+                                                        profilephoto: userResults[0].profilephoto
+                                                    }));
+                                                    res.status(200).json(responseData);
+                                                }
+                                            }
+                                        );
+                                    });
                                 }
                             }
                         );
@@ -985,7 +1007,7 @@ app.get('/api/post/savelist', (req, res) => {
     });
 });
 
-// Takip edilen kullanıcıların postlarını tarih sırasına göre getiren endpoint
+
 app.get('/api/post/get/page/follows', (req, res) => {
     const { userid, page, pageSize } = req.query;
 
