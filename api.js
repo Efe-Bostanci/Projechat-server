@@ -976,27 +976,31 @@ app.get('/api/post/savelist', (req, res) => {
                                     console.error('Error getting posts:', postErr);
                                     res.status(500).json({ error: 'Error getting posts' });
                                 } else {
+                                    const userIds = postResults.map(row => row.userid);
+
                                     // Kullanıcı adı ve profil fotoğrafını almak için "users" tablosunu sorgula
-                                    getConnectionAndExecute(req, res, (connection) => {
-                                        connection.query(
-                                            'SELECT username, profilephoto FROM users WHERE userid = ?',
-                                            [userid],
-                                            (userErr, userResults) => {
-                                                if (userErr) {
-                                                    console.error('Error getting user info:', userErr);
-                                                    res.status(500).json({ error: 'Error getting user info' });
-                                                } else {
-                                                    // Kullanıcının adı ve profil fotoğrafı ile gönderi bilgilerini birleştir
-                                                    const responseData = postResults.map(post => ({
-                                                        ...post,
-                                                        username: userResults[0].username,
-                                                        profilephoto: userResults[0].profilephoto
-                                                    }));
-                                                    res.status(200).json(responseData);
-                                                }
+                                    connection.query(
+                                        'SELECT userid, username, profilephoto FROM users WHERE userid IN (?)',
+                                        [userIds],
+                                        (userErr, userResults) => {
+                                            if (userErr) {
+                                                console.error('Error getting user information:', userErr);
+                                                res.status(500).json({ error: 'Error getting user information' });
+                                            } else {
+                                                // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
+                                                const result = postResults.map(post => {
+                                                    const user = userResults.find(u => u.userid === post.userid);
+                                                    return {
+                                                        postid: post.postid,
+                                                        userid: post.userid,
+                                                        username: user.username,
+                                                        profilephoto: user.profilephoto
+                                                    };
+                                                });
+                                                res.status(200).json(result);
                                             }
-                                        );
-                                    });
+                                        }
+                                    );
                                 }
                             }
                         );
@@ -1006,6 +1010,7 @@ app.get('/api/post/savelist', (req, res) => {
         );
     });
 });
+
 
 
 app.get('/api/post/get/page/follows', (req, res) => {
