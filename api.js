@@ -988,18 +988,15 @@ app.get('/api/post/savelist', (req, res) => {
                                                 res.status(500).json({ error: 'Error getting user information' });
                                             } else {
                                                 // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
-                                                const result = postResults.map(post => {
+                                                const mergedResults = postResults.map(post => {
                                                     const user = userResults.find(u => u.userid === post.userid);
                                                     return {
-                                                        postid: post.postid,
-                                                        userid: post.userid,
+                                                        ...post,
                                                         username: user.username,
-                                                        profilephoto: user.profilephoto,
-                                                        postcontent: post.postcontent,
-                                                        // Diğer post özelliklerini burada ekleyin
+                                                        profilephoto: user.profilephoto
                                                     };
                                                 });
-                                                res.status(200).json(result);
+                                                res.status(200).json(mergedResults);
                                             }
                                         }
                                     );
