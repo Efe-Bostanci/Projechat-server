@@ -1078,17 +1078,42 @@ app.get('/api/post/get/page/all', (req, res) => {
     const query = 'SELECT * FROM posts LIMIT ?, ?';
 
     getConnectionAndExecute(req, res, (connection) => {
-        connection.query(query, [startIndex, pageSize], (err, results) => {
+        connection.query(query, [startIndex, pageSize], (err, postResults) => {
             if (err) {
                 console.error('MySQL query error:', err);
-                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
+                res.status(500).send({ error: 'Internal Server Error: Please try again later.' });
             } else {
-                console.log('Retrieved records:', results);
-                res.status(200).send(results);
+                const userIds = postResults.map(row => row.userid);
+
+                // Kullanıcı adı ve profil fotoğrafını almak için "users" tablosunu sorgula
+                getConnectionAndExecute(req, res, (connection) => {
+                    connection.query(
+                        'SELECT userid, username, profilephoto FROM users WHERE userid IN (?)',
+                        [userIds],
+                        (userErr, userResults) => {
+                            if (userErr) {
+                                console.error('Error getting user information:', userErr);
+                                res.status(500).json({error: 'Error getting user information'});
+                            } else {
+                                // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
+                                const mergedResults = postResults.map(post => {
+                                    const user = userResults.find(u => u.userid === post.userid);
+                                    return {
+                                        ...post,
+                                        username: user.username,
+                                        profilephoto: user.profilephoto
+                                    };
+                                });
+                                res.status(200).json(mergedResults);
+                            }
+                        }
+                    );
+                });
             }
         });
     });
 });
+
 
 app.get('/api/post/get/id', (req, res) => {
     const userid = req.query.userid;
