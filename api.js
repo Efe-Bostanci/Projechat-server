@@ -1010,7 +1010,6 @@ app.get('/api/post/savelist', (req, res) => {
     });
 });
 
-
 app.get('/api/post/get/page/follows', (req, res) => {
     const { userid, page, pageSize } = req.query;
 
@@ -1034,6 +1033,12 @@ app.get('/api/post/get/page/follows', (req, res) => {
             if (err) {
                 console.error('Takip edilen kullanıcıları alırken bir hata oluştu:', err);
                 res.status(500).json({ error: 'Sunucu hatası' });
+                return;
+            }
+
+            // Eğer takip edilen kullanıcı yoksa, boş bir cevap gönder
+            if (followedUsers.length === 0) {
+                res.status(200).json([]);
                 return;
             }
 
@@ -1118,8 +1123,6 @@ app.get('/api/post/get/page/all', (req, res) => {
         });
     });
 });
-
-
 
 app.get('/api/post/get/id', (req, res) => {
     const userid = req.query.userid;
