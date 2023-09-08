@@ -976,6 +976,7 @@ app.get('/api/post/savelist', (req, res) => {
                                     console.error('Error getting posts:', postErr);
                                     res.status(500).json({ error: 'Error getting posts' });
                                 } else {
+                                    // Kullanıcı adı ve profil fotoğrafını almak için "users" tablosunu sorgula
                                     const userIds = postResults.map(row => row.userid);
 
                                     // Kullanıcı adı ve profil fotoğrafını almak için "users" tablosunu sorgula
@@ -1010,7 +1011,6 @@ app.get('/api/post/savelist', (req, res) => {
         );
     });
 });
-
 
 
 app.get('/api/post/get/page/follows', (req, res) => {
