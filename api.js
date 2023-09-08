@@ -952,9 +952,8 @@ app.post('/api/post/save', (req, res) => {
 });
 
 app.get('/api/post/savelist', (req, res) => {
-    const { userid } = req.query;
+    const {userid} = req.query;
 
-    // Kullanıcının kaydedilen gönderi ID'lerini al
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'SELECT postid FROM saves WHERE userid = ?',
@@ -962,11 +961,10 @@ app.get('/api/post/savelist', (req, res) => {
             (err, results) => {
                 if (err) {
                     console.error('Error getting saved posts:', err);
-                    res.status(500).json({ error: 'Error getting saved posts' });
+                    res.status(500).json({error: 'Error getting saved posts'});
                 } else {
                     const postIds = results.map(row => row.postid);
 
-                    // Kullanıcının kaydettiği gönderi ID'lerini kullanarak gönderi bilgilerini al
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query(
                             'SELECT * FROM posts WHERE postid IN (?)',
@@ -974,9 +972,9 @@ app.get('/api/post/savelist', (req, res) => {
                             (postErr, postResults) => {
                                 if (postErr) {
                                     console.error('Error getting posts:', postErr);
-                                    res.status(500).json({ error: 'Error getting posts' });
+                                    res.status(500).json({error: 'Error getting posts'});
                                 } else {
-                                    res.status(200).send();
+                                    res.status(200).json(postResults);
                                 }
                             }
                         );
