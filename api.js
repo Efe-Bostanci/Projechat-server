@@ -1128,7 +1128,6 @@ app.get('/api/post/get/all', (req, res) => {
     });
 });
 
-
 app.get('/api/post/get/page/all', (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = 15;
@@ -1226,8 +1225,6 @@ app.get('/api/post/get/id', (req, res) => {
         );
     });
 });
-
-
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
     const {followerid, followedid} = req.body;
