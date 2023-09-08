@@ -1036,12 +1036,6 @@ app.get('/api/post/get/page/follows', (req, res) => {
                 return;
             }
 
-            // Eğer takip edilen kullanıcı yoksa, boş bir cevap gönder
-            if (followedUsers.length === 0) {
-                res.status(200).json([]);
-                return;
-            }
-
             // Takip edilen kullanıcıların postlarını al ve sayfalama uygula
             getConnectionAndExecute(req, res, (connection) => {
                 connection.query(getPostsQuery, [userid, startIndex, parsedPageSize], (err, posts) => {
@@ -1051,7 +1045,37 @@ app.get('/api/post/get/page/follows', (req, res) => {
                         return;
                     }
 
-                    res.json(posts); // Sayfalama sonuçlarını istemciye gönder
+                    if (posts.length === 0) {
+                        // Eğer sayfa boşsa, boş bir cevap gönder
+                        res.status(200).json([]);
+                    } else {
+                        const userIds = posts.map(post => post.userid);
+
+                        // Kullanıcı adı ve profil fotoğrafını almak için "users" tablosunu sorgula
+                        getConnectionAndExecute(req, res, (connection) => {
+                            connection.query(
+                                'SELECT userid, username, profilephoto FROM users WHERE userid IN (?)',
+                                [userIds],
+                                (userErr, userResults) => {
+                                    if (userErr) {
+                                        console.error('Kullanıcı bilgilerini alırken bir hata oluştu:', userErr);
+                                        res.status(500).json({ error: 'Kullanıcı bilgilerini alırken hata oluştu' });
+                                    } else {
+                                        // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
+                                        const mergedResults = posts.map(post => {
+                                            const user = userResults.find(u => u.userid === post.userid);
+                                            return {
+                                                ...post,
+                                                username: user.username,
+                                                profilephoto: user.profilephoto
+                                            };
+                                        });
+                                        res.status(200).json(mergedResults);
+                                    }
+                                }
+                            );
+                        });
+                    }
                 });
             });
         });
