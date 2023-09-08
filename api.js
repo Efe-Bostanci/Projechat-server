@@ -1155,18 +1155,48 @@ app.get('/api/post/get/id', (req, res) => {
         connection.query(
             'SELECT * FROM posts WHERE userid = ?',
             [userid],
-            (err, results) => {
+            (err, postResults) => {
                 if (err) {
                     console.error('Error retrieving records:', err);
                     res.status(500).send('Error retrieving records');
                 } else {
-                    console.log('Retrieved records:', results);
-                    res.status(200).send(results);
+                    if (postResults.length === 0) {
+                        // Eğer sayfa boşsa, boş bir cevap gönder
+                        res.status(200).json([]);
+                    } else {
+                        const userIds = postResults.map(row => row.userid);
+
+                        // Kullanıcı adı ve profil fotoğrafını almak için "users" tablosunu sorgula
+                        getConnectionAndExecute(req, res, (connection) => {
+                            connection.query(
+                                'SELECT userid, username, profilephoto FROM users WHERE userid IN (?)',
+                                [userIds],
+                                (userErr, userResults) => {
+                                    if (userErr) {
+                                        console.error('Error getting user information:', userErr);
+                                        res.status(500).json({ error: 'Error getting user information' });
+                                    } else {
+                                        // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
+                                        const mergedResults = postResults.map(post => {
+                                            const user = userResults.find(u => u.userid === post.userid);
+                                            return {
+                                                ...post,
+                                                username: user.username,
+                                                profilephoto: user.profilephoto
+                                            };
+                                        });
+                                        res.status(200).json(mergedResults);
+                                    }
+                                }
+                            );
+                        });
+                    }
                 }
             }
         );
     });
 });
+
 
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
