@@ -1301,21 +1301,19 @@ app.post('/api/post/like', (req, res) => {
                                                             console.log('MySQL\'den silindi:', deleteResult);
 
                                                             // "posts" tablosunda "postlike" değerini azalt
-                                                            getConnectionAndExecute(req, res, (connection) => {
-                                                                connection.query(
-                                                                    'UPDATE posts SET postlike = postlike - 1 WHERE postid = ?',
-                                                                    [postid],
-                                                                    (err, updateResult) => {
-                                                                        if (err) {
-                                                                            console.error('Hata:', err);
-                                                                            res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                                        } else {
-                                                                            console.log('Post beğenisi azaltıldı:', updateResult);
-                                                                            res.status(200).send();
-                                                                        }
+                                                            connection.query(
+                                                                'UPDATE posts SET postlike = postlike - 1 WHERE postid = ?',
+                                                                [postid],
+                                                                (err, updateResult) => {
+                                                                    if (err) {
+                                                                        console.error('Hata:', err);
+                                                                        res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
+                                                                    } else {
+                                                                        console.log('Post beğenisi azaltıldı:', updateResult);
+                                                                        res.status(200).send();
                                                                     }
-                                                                );
-                                                            });
+                                                                }
+                                                            );
                                                         }
                                                     }
                                                 );
@@ -1407,21 +1405,19 @@ app.post('/api/post/unlike', (req, res) => {
                                                             console.log('MySQL\'den silindi:', deleteResult);
 
                                                             // "posts" tablosunda "postlike" değerini artır
-                                                            getConnectionAndExecute(req, res, (connection) => {
-                                                                connection.query(
-                                                                    'UPDATE posts SET postlike = postlike + 1 WHERE postid = ?',
-                                                                    [postid],
-                                                                    (err, updateResult) => {
-                                                                        if (err) {
-                                                                            console.error('Hata:', err);
-                                                                            res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                                        } else {
-                                                                            console.log('Post beğenisi artırıldı:', updateResult);
-                                                                            res.status(200).send();
-                                                                        }
+                                                            connection.query(
+                                                                'UPDATE posts SET postlike = postlike + 1 WHERE postid = ?',
+                                                                [postid],
+                                                                (err, updateResult) => {
+                                                                    if (err) {
+                                                                        console.error('Hata:', err);
+                                                                        res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
+                                                                    } else {
+                                                                        console.log('Post beğenisi artırıldı:', updateResult);
+                                                                        res.status(200).send();
                                                                     }
-                                                                );
-                                                            });
+                                                                }
+                                                            );
                                                         }
                                                     }
                                                 );
