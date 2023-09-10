@@ -1244,34 +1244,75 @@ app.post('/api/post/like', (req, res) => {
                     } else {
                         const postid = results[0].postid;
 
-                        // "likes" tablosuna kaydet
+                        // "likes" tablosunda kullanıcının daha önce bu posta "like" atıp atmadığını kontrol et
                         getConnectionAndExecute(req, res, (connection) => {
                             connection.query(
-                                'INSERT INTO likes (userid, postid) VALUES (?, ?)',
+                                'SELECT * FROM likes WHERE userid = ? AND postid = ?',
                                 [userid, postid],
-                                (err, insertResult) => {
+                                (err, likeResults) => {
                                     if (err) {
                                         console.error('Hata:', err);
                                         res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
                                     } else {
-                                        console.log('MySQL\'e eklendi:', insertResult);
-
-                                        // "posts" tablosunda "postlike" değerini artır
-                                        getConnectionAndExecute(req, res, (connection) => {
+                                        if (likeResults.length === 0) {
+                                            // Kullanıcı daha önce bu posta "like" atmamışsa kaydet
                                             connection.query(
-                                                'UPDATE posts SET postlike = postlike + 1 WHERE postid = ?',
-                                                [postid],
-                                                (err, updateResult) => {
+                                                'INSERT INTO likes (userid, postid) VALUES (?, ?)',
+                                                [userid, postid],
+                                                (err, insertResult) => {
                                                     if (err) {
                                                         console.error('Hata:', err);
                                                         res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
                                                     } else {
-                                                        console.log('Post beğenisi artırıldı:', updateResult);
-                                                        res.status(200).send();
+                                                        console.log('MySQL\'e eklendi:', insertResult);
+
+                                                        // "posts" tablosunda "postlike" değerini artır
+                                                        connection.query(
+                                                            'UPDATE posts SET postlike = postlike + 1 WHERE postid = ?',
+                                                            [postid],
+                                                            (err, updateResult) => {
+                                                                if (err) {
+                                                                    console.error('Hata:', err);
+                                                                    res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                                                                } else {
+                                                                    console.log('Post beğenisi artırıldı:', updateResult);
+                                                                    res.status(200).send();
+                                                                }
+                                                            }
+                                                        );
                                                     }
                                                 }
                                             );
-                                        });
+                                        } else {
+                                            // Kullanıcı daha önce bu posta "like" atmışsa "like" kaydını sil
+                                            connection.query(
+                                                'DELETE FROM likes WHERE userid = ? AND postid = ?',
+                                                [userid, postid],
+                                                (err, deleteResult) => {
+                                                    if (err) {
+                                                        console.error('Hata:', err);
+                                                        res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                                                    } else {
+                                                        console.log('MySQL\'den silindi:', deleteResult);
+
+                                                        // "posts" tablosunda "postlike" değerini azalt
+                                                        connection.query(
+                                                            'UPDATE posts SET postlike = postlike - 1 WHERE postid = ?',
+                                                            [postid],
+                                                            (err, updateResult) => {
+                                                                if (err) {
+                                                                    console.error('Hata:', err);
+                                                                    res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                                                                } else {
+                                                                    console.log('Post beğenisi azaltıldı:', updateResult);
+                                                                    res.status(200).send();
+                                                                }
+                                                            }
+                                                        );
+                                                    }
+                                                }
+                                            );
+                                        }
                                     }
                                 }
                             );
@@ -1282,6 +1323,7 @@ app.post('/api/post/like', (req, res) => {
         );
     });
 });
+
 
 app.post('/api/post/unlike', (req, res) => {
     const { userid, postname, postphoto } = req.body;
