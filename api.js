@@ -1283,6 +1283,63 @@ app.post('/api/post/like', (req, res) => {
     });
 });
 
+app.post('/api/post/unlike', (req, res) => {
+    const { userid, postname, postphoto } = req.body;
+
+    // İlgili postu "posts" tablosunda bul
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT postid FROM posts WHERE postname = ? AND postphoto = ?',
+            [postname, postphoto],
+            (err, results) => {
+                if (err) {
+                    console.error('Hata:', err);
+                    res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                } else {
+                    if (results.length === 0) {
+                        res.status(404).send({ error: 'Belirtilen post bulunamadı.' });
+                    } else {
+                        const postid = results[0].postid;
+
+                        // "likes" tablosuna kaydet
+                        getConnectionAndExecute(req, res, (connection) => {
+                            connection.query(
+                                'INSERT INTO unlikes (userid, postid) VALUES (?, ?)',
+                                [userid, postid],
+                                (err, insertResult) => {
+                                    if (err) {
+                                        console.error('Hata:', err);
+                                        res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                                    } else {
+                                        console.log('MySQL\'e eklendi:', insertResult);
+
+                                        // "posts" tablosunda "postlike" değerini artır
+                                        getConnectionAndExecute(req, res, (connection) => {
+                                            connection.query(
+                                                'UPDATE posts SET postlike = postlike - 1 WHERE postid = ?',
+                                                [postid],
+                                                (err, updateResult) => {
+                                                    if (err) {
+                                                        console.error('Hata:', err);
+                                                        res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                                                    } else {
+                                                        console.log('Post beğenisi artırıldı:', updateResult);
+                                                        res.status(200).send();
+                                                    }
+                                                }
+                                            );
+                                        });
+                                    }
+                                }
+                            );
+                        });
+                    }
+                }
+            }
+        );
+    });
+});
+
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
     const {followerid, followedid} = req.body;
