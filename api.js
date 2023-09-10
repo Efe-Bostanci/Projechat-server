@@ -952,7 +952,7 @@ app.post('/api/post/save', (req, res) => {
 });
 
 app.get('/api/post/savelist', (req, res) => {
-    const { userid } = req.query;
+    const {userid} = req.query;
 
     // Kullanıcının kaydedilen gönderi ID'lerini al
     getConnectionAndExecute(req, res, (connection) => {
@@ -962,7 +962,7 @@ app.get('/api/post/savelist', (req, res) => {
             (err, results) => {
                 if (err) {
                     console.error('Error getting saved posts:', err);
-                    res.status(500).json({ error: 'Error getting saved posts' });
+                    res.status(500).json({error: 'Error getting saved posts'});
                 } else {
                     const postIds = results.map(row => row.postid);
 
@@ -974,7 +974,7 @@ app.get('/api/post/savelist', (req, res) => {
                             (postErr, postResults) => {
                                 if (postErr) {
                                     console.error('Error getting posts:', postErr);
-                                    res.status(500).json({ error: 'Error getting posts' });
+                                    res.status(500).json({error: 'Error getting posts'});
                                 } else {
                                     const userIds = postResults.map(row => row.userid);
 
@@ -985,7 +985,7 @@ app.get('/api/post/savelist', (req, res) => {
                                         (userErr, userResults) => {
                                             if (userErr) {
                                                 console.error('Error getting user information:', userErr);
-                                                res.status(500).json({ error: 'Error getting user information' });
+                                                res.status(500).json({error: 'Error getting user information'});
                                             } else {
                                                 // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
                                                 const mergedResults = postResults.map(post => {
@@ -1011,7 +1011,7 @@ app.get('/api/post/savelist', (req, res) => {
 });
 
 app.get('/api/post/get/page/follows', (req, res) => {
-    const { userid, page, pageSize } = req.query;
+    const {userid, page, pageSize} = req.query;
 
     const parsedPage = parseInt(page) || 1;
     const parsedPageSize = parseInt(pageSize) || 15;
@@ -1032,7 +1032,7 @@ app.get('/api/post/get/page/follows', (req, res) => {
         connection.query(followedUsersQuery, [userid], (err, followedUsers) => {
             if (err) {
                 console.error('Takip edilen kullanıcıları alırken bir hata oluştu:', err);
-                res.status(500).json({ error: 'Sunucu hatası' });
+                res.status(500).json({error: 'Sunucu hatası'});
                 return;
             }
 
@@ -1041,7 +1041,7 @@ app.get('/api/post/get/page/follows', (req, res) => {
                 connection.query(getPostsQuery, [userid, startIndex, parsedPageSize], (err, posts) => {
                     if (err) {
                         console.error('Takip edilen kullanıcıların postlarını alırken bir hata oluştu:', err);
-                        res.status(500).json({ error: 'Sunucu hatası' });
+                        res.status(500).json({error: 'Sunucu hatası'});
                         return;
                     }
 
@@ -1059,7 +1059,7 @@ app.get('/api/post/get/page/follows', (req, res) => {
                                 (userErr, userResults) => {
                                     if (userErr) {
                                         console.error('Kullanıcı bilgilerini alırken bir hata oluştu:', userErr);
-                                        res.status(500).json({ error: 'Kullanıcı bilgilerini alırken hata oluştu' });
+                                        res.status(500).json({error: 'Kullanıcı bilgilerini alırken hata oluştu'});
                                     } else {
                                         // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
                                         const mergedResults = posts.map(post => {
@@ -1105,7 +1105,7 @@ app.get('/api/post/get/all', (req, res) => {
                                 (userErr, userResults) => {
                                     if (userErr) {
                                         console.error('Error getting user information:', userErr);
-                                        res.status(500).json({ error: 'Error getting user information' });
+                                        res.status(500).json({error: 'Error getting user information'});
                                     } else {
                                         // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
                                         const mergedResults = postResults.map(post => {
@@ -1139,7 +1139,7 @@ app.get('/api/post/get/page/all', (req, res) => {
         connection.query(query, [startIndex, pageSize], (err, postResults) => {
             if (err) {
                 console.error('MySQL query error:', err);
-                res.status(500).send({ error: 'Internal Server Error: Please try again later.' });
+                res.status(500).send({error: 'Internal Server Error: Please try again later.'});
             } else {
                 if (postResults.length === 0) {
                     // Eğer sayfa boşsa, boş bir cevap gönder
@@ -1203,7 +1203,7 @@ app.get('/api/post/get/id', (req, res) => {
                                 (userErr, userResults) => {
                                     if (userErr) {
                                         console.error('Error getting user information:', userErr);
-                                        res.status(500).json({ error: 'Error getting user information' });
+                                        res.status(500).json({error: 'Error getting user information'});
                                     } else {
                                         // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
                                         const mergedResults = postResults.map(post => {
@@ -1225,6 +1225,64 @@ app.get('/api/post/get/id', (req, res) => {
         );
     });
 });
+
+app.post('/api/post/like', (req, res) => {
+    const { userid, postname, postphoto } = req.body;
+
+    // İlgili postu "posts" tablosunda bul
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'SELECT postid FROM posts WHERE postname = ? AND postphoto = ?',
+            [postname, postphoto],
+            (err, results) => {
+                if (err) {
+                    console.error('Hata:', err);
+                    res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                } else {
+                    if (results.length === 0) {
+                        res.status(404).send({ error: 'Belirtilen post bulunamadı.' });
+                    } else {
+                        const postid = results[0].postid;
+
+                        // "likes" tablosuna kaydet
+                        getConnectionAndExecute(req, res, (connection) => {
+                            connection.query(
+                                'INSERT INTO likes (userid, postid) VALUES (?, ?)',
+                                [userid, postid],
+                                (err, insertResult) => {
+                                    if (err) {
+                                        console.error('Hata:', err);
+                                        res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                                    } else {
+                                        console.log('MySQL\'e eklendi:', insertResult);
+
+                                        // "posts" tablosunda "postlike" değerini artır
+                                        getConnectionAndExecute(req, res, (connection) => {
+                                            connection.query(
+                                                'UPDATE posts SET postlike = postlike + 1 WHERE postid = ?',
+                                                [postid],
+                                                (err, updateResult) => {
+                                                    if (err) {
+                                                        console.error('Hata:', err);
+                                                        res.status(500).send({ error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.' });
+                                                    } else {
+                                                        console.log('Post beğenisi artırıldı:', updateResult);
+                                                        res.status(200).send();
+                                                    }
+                                                }
+                                            );
+                                        });
+                                    }
+                                }
+                            );
+                        });
+                    }
+                }
+            }
+        );
+    });
+});
+
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
     const {followerid, followedid} = req.body;
