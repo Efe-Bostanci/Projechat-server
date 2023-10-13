@@ -824,7 +824,7 @@ app.post('/api/post/upload', (req, res) => {
 });
 
 app.post('/api/post/newpost', (req, res) => {
-    const {userid, postphoto, postname, postdes, posttime} = req.body;
+    const {userid, postphoto, postname, postdes, postcategory, posttime} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
@@ -841,8 +841,8 @@ app.post('/api/post/newpost', (req, res) => {
 
                         getConnectionAndExecute(req, res, (connection) => {
                             connection.query(
-                                'INSERT INTO posts (userid, postphoto, postname, postdes, posttime) VALUES (?, ?, ?, ?, ?)',
-                                [userid, postphoto, postname, postdes, posttime],
+                                'INSERT INTO posts (userid, postphoto, postname, postdes, postcategory, posttime) VALUES (?, ?, ?, ?, ?, ?)',
+                                [userid, postphoto, postname, postdes, postcategory, posttime],
                                 (insertErr, insertResults) => {
                                     if (insertErr) {
                                         console.error('Error inserting record:', insertErr);
