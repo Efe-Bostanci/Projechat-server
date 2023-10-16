@@ -887,64 +887,47 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
-    const {postname, userid} = req.body;
+    const {postid, userid} = req.body;
 
+    // "saves" tablosunda belirtilen postid ve userid ile kayıt var mı kontrol et
     getConnectionAndExecute(req, res, (connection) => {
-        // "posts" tablosunda ilgili postu arayın
-        connection.query('SELECT postid FROM posts WHERE postname = ?', [postname, userid], (error, results) => {
+        connection.query('SELECT * FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error, saveResults) => {
             if (error) {
                 console.error('Sorgu hatası: ' + error.message);
                 res.status(500).json({success: false, message: 'Veritabanı hatası'});
             } else {
-                if (results.length > 0) {
-                    // Post bulundu, postid'yi değişkene kaydet
-                    const postid = results[0].postid;
-
-                    // "saves" tablosunda belirtilen postid ve userid ile kayıt var mı kontrol et
+                if (saveResults.length > 0) {
+                    // Kayıt varsa, bu kaydı "saves" tablosundan sil
                     getConnectionAndExecute(req, res, (connection) => {
-                        connection.query('SELECT * FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error, saveResults) => {
+                        connection.query('DELETE FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error) => {
                             if (error) {
-                                console.error('Sorgu hatası: ' + error.message);
+                                console.error('Silme hatası: ' + error.message);
                                 res.status(500).json({success: false, message: 'Veritabanı hatası'});
                             } else {
-                                if (saveResults.length > 0) {
-                                    // Kayıt varsa, bu kaydı "saves" tablosundan sil
-                                    getConnectionAndExecute(req, res, (connection) => {
-                                        connection.query('DELETE FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error) => {
-                                            if (error) {
-                                                console.error('Silme hatası: ' + error.message);
-                                                res.status(500).json({success: false, message: 'Veritabanı hatası'});
-                                            } else {
-                                                console.log('Kayıt silindi.');
-                                                res.json({
-                                                    success: true,
-                                                    message: 'Gönderi kaydedildi ve kayıt silindi.'
-                                                });
-                                            }
-                                        });
-                                    });
-                                } else {
-                                    // Kayıt yoksa, bu bilgileri "saves" tablosuna ekle
-                                    getConnectionAndExecute(req, res, (connection) => {
-                                        connection.query('INSERT INTO saves (postid, userid) VALUES (?, ?)', [postid, userid], (error) => {
-                                            if (error) {
-                                                console.error('Ekleme hatası: ' + error.message);
-                                                res.status(500).json({success: false, message: 'Veritabanı hatası'});
-                                            } else {
-                                                console.log('Yeni kayıt eklendi.');
-                                                res.json({
-                                                    success: true,
-                                                    message: 'Gönderi kaydedildi ve yeni kayıt eklendi.'
-                                                });
-                                            }
-                                        });
-                                    });
-                                }
+                                console.log('Kayıt silindi.');
+                                res.json({
+                                    success: true,
+                                    message: 'Gönderi kaydedildi ve kayıt silindi.'
+                                });
                             }
                         });
                     });
                 } else {
-                    res.status(404).json({success: false, message: 'Belirtilen post bulunamadı.'});
+                    // Kayıt yoksa, bu bilgileri "saves" tablosuna ekle
+                    getConnectionAndExecute(req, res, (connection) => {
+                        connection.query('INSERT INTO saves (postid, userid) VALUES (?, ?)', [postid, userid], (error) => {
+                            if (error) {
+                                console.error('Ekleme hatası: ' + error.message);
+                                res.status(500).json({success: false, message: 'Veritabanı hatası'});
+                            } else {
+                                console.log('Yeni kayıt eklendi.');
+                                res.json({
+                                    success: true,
+                                    message: 'Gönderi kaydedildi ve yeni kayıt eklendi.'
+                                });
+                            }
+                        });
+                    });
                 }
             }
         });
