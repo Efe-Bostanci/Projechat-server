@@ -887,7 +887,7 @@ app.post('/api/post/delete', (req, res) => {
 });
 
 app.post('/api/post/save', (req, res) => {
-    const {postid, userid} = req.body;
+    const {userid, postid} = req.body;
 
     // "saves" tablosunda belirtilen postid ve userid ile kayıt var mı kontrol et
     getConnectionAndExecute(req, res, (connection) => {
