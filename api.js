@@ -934,6 +934,45 @@ app.post('/api/post/save', (req, res) => {
     });
 });
 
+app.post('/api/post/unsave', (req, res) => {
+    const { userid, postid } = req.body;
+
+    // "saves" tablosunda belirtilen postid ve userid ile kayıt var mı kontrol et
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query('SELECT * FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error, saveResults) => {
+            if (error) {
+                console.error('Sorgu hatası: ' + error.message);
+                res.status(500).json({ success: false, message: 'Veritabanı hatası' });
+            } else {
+                if (saveResults.length > 0) {
+                    // Kayıt varsa, bu kaydı "saves" tablosundan sil
+                    getConnectionAndExecute(req, res, (connection) => {
+                        connection.query('DELETE FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error) => {
+                            if (error) {
+                                console.error('Silme hatası: ' + error.message);
+                                res.status(500).json({ success: false, message: 'Veritabanı hatası' });
+                            } else {
+                                console.log('Kayıt silindi.');
+                                res.json({
+                                    success: true,
+                                    message: 'Kayıt silindi.'
+                                });
+                            }
+                        });
+                    });
+                } else {
+                    // Kayıt yoksa, bir şey yapma (kayıt zaten yok)
+                    res.json({
+                        success: true,
+                        message: 'Kayıt bulunamadı.'
+                    });
+                }
+            }
+        });
+    });
+});
+
+
 app.get('/api/post/savelist', (req, res) => {
     const {userid} = req.query;
 
