@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
+require('dotenv').config();
 const multer = require('multer');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -12,10 +13,10 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 const dbConfig = {
-    host: '77.223.138.139',
-    user: 'projech1_kullanici',
-    password: 'L6P]hm6(3cSOd9',
-    database: 'projech1_data'
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE
 };
 
 const dbPool = mysql.createPool(dbConfig);
