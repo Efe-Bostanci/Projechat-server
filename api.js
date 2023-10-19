@@ -942,21 +942,21 @@ app.post('/api/post/unsave', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query('SELECT * FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error, saveResults) => {
             if (error) {
-                console.error('Sorgu hatası: ' + error.message);
-                res.status(500).json({ success: false, message: 'Veritabanı hatası' });
+                console.error('Query error: ' + error.message);
+                res.status(500).json({ success: false, message: 'Database error' });
             } else {
                 if (saveResults.length > 0) {
                     // Kayıt varsa, bu kaydı "saves" tablosundan sil
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query('DELETE FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error) => {
                             if (error) {
-                                console.error('Silme hatası: ' + error.message);
-                                res.status(500).json({ success: false, message: 'Veritabanı hatası' });
+                                console.error('Delete error: ' + error.message);
+                                res.status(500).json({ success: false, message: 'Database error' });
                             } else {
-                                console.log('Kayıt silindi.');
+                                console.log('The record has been deleted.');
                                 res.json({
                                     success: true,
-                                    message: 'Kayıt silindi.'
+                                    message: 'The record has been deleted.'
                                 });
                             }
                         });
@@ -965,7 +965,7 @@ app.post('/api/post/unsave', (req, res) => {
                     // Kayıt yoksa, bir şey yapma (kayıt zaten yok)
                     res.json({
                         success: true,
-                        message: 'Kayıt bulunamadı.'
+                        message: 'No Records Found.'
                     });
                 }
             }
@@ -1054,8 +1054,8 @@ app.get('/api/post/get/page/follows', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(followedUsersQuery, [userid], (err, followedUsers) => {
             if (err) {
-                console.error('Takip edilen kullanıcıları alırken bir hata oluştu: ', err);
-                res.status(500).json({error: 'Sunucu hatası'});
+                console.error('An error occurred while retrieving followed users: ', err);
+                res.status(500).json({error: 'Server error'});
                 return;
             }
 
@@ -1063,8 +1063,8 @@ app.get('/api/post/get/page/follows', (req, res) => {
             getConnectionAndExecute(req, res, (connection) => {
                 connection.query(getPostsQuery, [userid, startIndex, parsedPageSize], (err, posts) => {
                     if (err) {
-                        console.error('Takip edilen kullanıcıların postlarını alırken bir hata oluştu: ', err);
-                        res.status(500).json({error: 'Sunucu hatası'});
+                        console.error('An error occurred while retrieving posts from followed users: ', err);
+                        res.status(500).json({error: 'Server error'});
                         return;
                     }
 
@@ -1081,8 +1081,8 @@ app.get('/api/post/get/page/follows', (req, res) => {
                                 [userIds],
                                 (userErr, userResults) => {
                                     if (userErr) {
-                                        console.error('Kullanıcı bilgilerini alırken bir hata oluştu: ', userErr);
-                                        res.status(500).json({error: 'Kullanıcı bilgilerini alırken hata oluştu'});
+                                        console.error('An error occurred while retrieving user information: ', userErr);
+                                        res.status(500).json({error: 'An error occurred while retrieving user information'});
                                     } else {
                                         // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
                                         const mergedResults = posts.map(post => {
@@ -1249,214 +1249,6 @@ app.get('/api/post/get/id', (req, res) => {
     });
 });
 
-app.post('/api/post/like', (req, res) => {
-    const {userid, postname, postphoto} = req.body;
-
-    // İlgili postu "posts" tablosunda bul
-    getConnectionAndExecute(req, res, (connection) => {
-        connection.query(
-            'SELECT postid FROM posts WHERE postname = ? AND postphoto = ?',
-            [postname, postphoto],
-            (err, results) => {
-                if (err) {
-                    console.error('Hata: ', err);
-                    res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                } else {
-                    if (results.length === 0) {
-                        res.status(404).send({error: 'Belirtilen post bulunamadı.'});
-                    } else {
-                        const postid = results[0].postid;
-
-                        // "likes" tablosunda kullanıcının daha önce bu posta "like" atıp atmadığını kontrol et
-                        getConnectionAndExecute(req, res, (connection) => {
-                            connection.query(
-                                'SELECT * FROM likes WHERE userid = ? AND postid = ?',
-                                [userid, postid],
-                                (err, likeResults) => {
-                                    if (err) {
-                                        console.error('Hata: ', err);
-                                        res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                    } else {
-                                        if (likeResults.length === 0) {
-                                            // Kullanıcı daha önce bu posta "like" atmamışsa kaydet
-                                            getConnectionAndExecute(req, res, (connection) => {
-                                                connection.query(
-                                                    'INSERT INTO likes (userid, postid) VALUES (?, ?)',
-                                                    [userid, postid],
-                                                    (err, insertResult) => {
-                                                        if (err) {
-                                                            console.error('Hata: ', err);
-                                                            res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                        } else {
-                                                            console.log('MySQL\'e eklendi: ', insertResult);
-
-                                                            // "posts" tablosunda "postlike" değerini artır
-                                                            getConnectionAndExecute(req, res, (connection) => {
-                                                                connection.query(
-                                                                    'UPDATE posts SET postlike = postlike + 1 WHERE postid = ?',
-                                                                    [postid],
-                                                                    (err, updateResult) => {
-                                                                        if (err) {
-                                                                            console.error('Hata: ', err);
-                                                                            res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                                        } else {
-                                                                            console.log('Post beğenisi artırıldı: ', updateResult);
-                                                                            res.status(200).send();
-                                                                        }
-                                                                    }
-                                                                );
-                                                            });
-                                                        }
-                                                    }
-                                                );
-                                            });
-                                        } else {
-                                            // Kullanıcı daha önce bu posta "like" atmışsa "like" kaydını sil
-                                            getConnectionAndExecute(req, res, (connection) => {
-                                                connection.query(
-                                                    'DELETE FROM likes WHERE userid = ? AND postid = ?',
-                                                    [userid, postid],
-                                                    (err, deleteResult) => {
-                                                        if (err) {
-                                                            console.error('Hata: ', err);
-                                                            res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                        } else {
-                                                            console.log('MySQL\'den silindi: ', deleteResult);
-
-                                                            // "posts" tablosunda "postlike" değerini azalt
-                                                            connection.query(
-                                                                'UPDATE posts SET postlike = postlike - 1 WHERE postid = ?',
-                                                                [postid],
-                                                                (err, updateResult) => {
-                                                                    if (err) {
-                                                                        console.error('Hata: ', err);
-                                                                        res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                                    } else {
-                                                                        console.log('Post beğenisi azaltıldı: ', updateResult);
-                                                                        res.status(200).send();
-                                                                    }
-                                                                }
-                                                            );
-                                                        }
-                                                    }
-                                                );
-                                            });
-                                        }
-                                    }
-                                }
-                            );
-                        });
-                    }
-                }
-            }
-        );
-    });
-});
-
-app.post('/api/post/unlike', (req, res) => {
-    const {userid, postname, postphoto} = req.body;
-
-    // İlgili postu "posts" tablosunda bul
-    getConnectionAndExecute(req, res, (connection) => {
-        connection.query(
-            'SELECT postid FROM posts WHERE postname = ? AND postphoto = ?',
-            [postname, postphoto],
-            (err, results) => {
-                if (err) {
-                    console.error('Hata: ', err);
-                    res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                } else {
-                    if (results.length === 0) {
-                        res.status(404).send({error: 'Belirtilen post bulunamadı.'});
-                    } else {
-                        const postid = results[0].postid;
-
-                        // "unlikes" tablosunda kullanıcının daha önce bu posta "unlike" atıp atmadığını kontrol et
-                        getConnectionAndExecute(req, res, (connection) => {
-                            connection.query(
-                                'SELECT * FROM unlikes WHERE userid = ? AND postid = ?',
-                                [userid, postid],
-                                (err, unlikeResults) => {
-                                    if (err) {
-                                        console.error('Hata: ', err);
-                                        res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                    } else {
-                                        if (unlikeResults.length === 0) {
-                                            // Kullanıcı daha önce bu posta "unlike" yapmadıysa, "unlike" kaydını ekler
-                                            getConnectionAndExecute(req, res, (connection) => {
-                                                connection.query(
-                                                    'INSERT INTO unlikes (userid, postid) VALUES (?, ?)',
-                                                    [userid, postid],
-                                                    (err, insertResult) => {
-                                                        if (err) {
-                                                            console.error('Hata: ', err);
-                                                            res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                        } else {
-                                                            console.log('MySQL\'e eklendi: ', insertResult);
-
-                                                            // "posts" tablosunda "postlike" değerini azalt
-                                                            getConnectionAndExecute(req, res, (connection) => {
-                                                                connection.query(
-                                                                    'UPDATE posts SET postlike = postlike - 1 WHERE postid = ?',
-                                                                    [postid],
-                                                                    (err, updateResult) => {
-                                                                        if (err) {
-                                                                            console.error('Hata: ', err);
-                                                                            res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                                        } else {
-                                                                            console.log('Post beğenisi azaltıldı: ', updateResult);
-                                                                            res.status(200).send();
-                                                                        }
-                                                                    }
-                                                                );
-                                                            });
-                                                        }
-                                                    }
-                                                );
-                                            });
-                                        } else {
-                                            // Kullanıcı daha önce bu posta "unlike" yapmışsa, "unlike" kaydını siler
-                                            getConnectionAndExecute(req, res, (connection) => {
-                                                connection.query(
-                                                    'DELETE FROM unlikes WHERE userid = ? AND postid = ?',
-                                                    [userid, postid],
-                                                    (err, deleteResult) => {
-                                                        if (err) {
-                                                            console.error('Hata: ', err);
-                                                            res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                        } else {
-                                                            console.log('MySQL\'den silindi: ', deleteResult);
-
-                                                            // "posts" tablosunda "postlike" değerini artır
-                                                            connection.query(
-                                                                'UPDATE posts SET postlike = postlike + 1 WHERE postid = ?',
-                                                                [postid],
-                                                                (err, updateResult) => {
-                                                                    if (err) {
-                                                                        console.error('Hata: ', err);
-                                                                        res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
-                                                                    } else {
-                                                                        console.log('Post beğenisi artırıldı: ', updateResult);
-                                                                        res.status(200).send();
-                                                                    }
-                                                                }
-                                                            );
-                                                        }
-                                                    }
-                                                );
-                                            });
-                                        }
-                                    }
-                                }
-                            );
-                        });
-                    }
-                }
-            }
-        );
-    });
-});
-
 //--------------------------------------------------------follow--------------------------------------------------------
 app.post('/api/follow/add', (req, res) => {
     const {followerid, followedid} = req.body;
@@ -1556,7 +1348,7 @@ app.get('/api/follow/all', (req, res) => {
             [userid, userid],
             (error, results) => {
                 if (error) {
-                    res.status(500).json({error: 'Veritabanı hatası'});
+                    res.status(500).json({error: 'Database error'});
                 } else {
                     const followerCount = results[0].followerCount;
                     const followedCount = results[0].followedCount;
