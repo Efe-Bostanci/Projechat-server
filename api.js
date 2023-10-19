@@ -24,8 +24,8 @@ const dbPool = mysql.createPool(dbConfig);
 const getConnectionAndExecute = (req, res, callback) => {
     dbPool.getConnection((err, connection) => {
         if (err) {
-            console.error('Veritabanı bağlantı hatası:', err);
-            res.status(500).json({error: 'Veritabanı bağlantı hatası'});
+            console.error('Database connection error: ', err);
+            res.status(500).json({error: 'Database connection error'});
             return;
         }
 
@@ -51,8 +51,8 @@ const uploadUser = multer({storage: storageUser}).single('photo'); // "photo" al
 app.post('/api/user/upload', (req, res) => {
     uploadUser(req, res, (err) => {
         if (err) {
-            console.log('Error uploading profile photo:', err);
-            res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
+            console.log('Error uploading profile photo: ', err);
+            res.status(400).json({success: false, message: 'The photo could not be loaded.'});
         } else {
             const imageUrl = `http://23.26.248.43/uploads/user/profile/${req.file.filename}`;
             res.json({success: true, imageUrl: imageUrl});
@@ -75,11 +75,11 @@ app.post('/api/user/delete/profile', (req, res) => {
     // Dosyayı sil
     fs.unlink(filePathUser, (err) => {
         if (err) {
-            console.log('Dosya silinirken bir hata oluştu:', err);
-            res.status(500).json({success: false, message: 'Dosya silinirken bir hata oluştu.'});
+            console.log('An error occurred while deleting the file: ', err);
+            res.status(500).json({success: false, message: 'An error occurred while deleting the file.'});
         } else {
-            console.log('Dosya başarıyla silindi:', filePathUser);
-            res.json({success: true, message: 'Dosya başarıyla silindi.'});
+            console.log('The file has been deleted successfully.', filePathUser);
+            res.json({success: true, message: 'The file has been deleted successfully.'});
         }
     });
 });
@@ -92,7 +92,7 @@ app.post('/api/user/update', (req, res) => {
             'SELECT * FROM users WHERE userid = ?', [userid],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error querying database.');
                 } else if (results.length === 0) {
                     console.log('User with provided id not found.');
@@ -111,7 +111,7 @@ app.post('/api/user/update', (req, res) => {
                             [user.username, user.userbio, user.profilephoto, userid],
                             (err, results) => {
                                 if (err) {
-                                    console.log('Error updating user in MySQL:', err);
+                                    console.log('Error updating user in MySQL: ', err);
                                     res.status(500).send('Error updating user in database.');
                                 } else {
                                     console.log('User updated successfully.');
@@ -141,11 +141,11 @@ app.post('/api/user/signup', (req, res) => {
                         console.log(`User already exists with username ${username}.`);
                         res.status(409).send({error: 'Conflict: User already exists with this username.'});
                     } else {
-                        console.log('Error inserting into MySQL:', err);
+                        console.log('Error inserting into MySQL: ', err);
                         res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                     }
                 } else {
-                    console.log('Inserted into MySQL:', results);
+                    console.log('Inserted into MySQL: ', results);
                     res.status(200).send({message: 'User successfully inserted into database.'});
                 }
             }
@@ -161,7 +161,7 @@ app.post('/api/user/login', (req, res) => {
             'SELECT * FROM users WHERE email = ? AND password = ?', [email, password],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                 } else if (results.length === 0) {
                     console.log('No user found with provided credentials.');
@@ -173,7 +173,7 @@ app.post('/api/user/login', (req, res) => {
                     console.log('İki faktörlü doğrulama gerekiyor.');
                     res.status(200).send({twofactor: 1});
                 } else {
-                    console.log('User found:', results[0]);
+                    console.log('User found: ', results[0]);
                     res.status(200).send(results);
                 }
             }
@@ -190,22 +190,22 @@ app.post('/api/user/login/google', (req, res) => {
             [email],
             (err, results) => {
                 if (err) {
-                    console.log('MySQL sorgulama hatası:', err);
+                    console.log('MySQL sorgulama hatası: ', err);
                     res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                 } else {
                     if (results.length === 0) {
-                        console.log('Sağlanan kimlik bilgileriyle hiçbir kullanıcı bulunamadı.');
+                        console.log('No users were found with the provided credentials.');
                         res.status(401).send({error: 'Unauthorized: Invalid email or password.'});
                     } else {
                         const user = results[0];
                         if (user.status === 0) {
-                            console.log('Kullanıcı devre dışı veya silinmiş durumda.');
+                            console.log('The user is disabled or deleted.');
                             res.status(403).send({error: 'Unauthorized: This account is either disabled or deleted.'});
                         } else if (user.twofactor === 1) {
-                            console.log('İki faktörlü doğrulama gerekiyor.');
+                            console.log('Two-factor authentication required.');
                             res.status(200).send({twofactor: 1});
                         } else {
-                            console.log('Kullanıcı bulundu:', user);
+                            console.log('User found: ', user);
                             res.status(200).send(user);
                         }
                     }
@@ -223,13 +223,13 @@ app.post('/api/user/deleteuser', (req, res) => {
             'UPDATE users SET status = 0 WHERE username = ? AND password = ?', [username, password],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error updating user status in database.');
                 } else if (results.affectedRows === 0) {
                     console.log('No user found with provided credentials.');
                     res.status(401).send('Invalid username or password.');
                 } else {
-                    console.log('User status updated:', results.affectedRows);
+                    console.log('User status updated: ', results.affectedRows);
                     res.status(200).send('User status set to 0.');
                 }
             }
@@ -246,13 +246,13 @@ app.put('/api/user/changepassword', (req, res) => {
             [newpassword, username, password],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error updating user password in database.');
                 } else if (results.affectedRows === 0) {
                     console.log('No user found with provided credentials.');
                     res.status(401).send('Invalid username or password.');
                 } else {
-                    console.log('User password updated:', results.affectedRows);
+                    console.log('User password updated: ', results.affectedRows);
                     res.status(200).send('User password updated.');
                 }
             }
@@ -269,16 +269,16 @@ app.post('/api/user/forgotpassword', (req, res) => {
             [username, email],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error retrieving user information from database.');
                 } else if (results.length === 0) {
                     console.log('No user found with provided credentials.');
                     res.status(401).send('Invalid username or email.');
                 } else if (results[0].twofactor === 1) {
-                    console.log('İki faktörlü doğrulama gerekiyor.');
+                    console.log('Two-factor authentication required.');
                     res.status(200).send({twofactor: 1});
                 } else {
-                    console.log('User found:', results[0]);
+                    console.log('User found: ', results[0]);
                     res.status(200).send('User information is correct.');
                 }
             }
@@ -295,13 +295,13 @@ app.put('/api/user/createpassword', (req, res) => {
             [newPassword, username],
             (err, results) => {
                 if (err) {
-                    console.log('Error updating password in the database:', err);
+                    console.log('Error updating password in the database: ', err);
                     res.status(500).send('Error updating password.');
                 } else if (results.affectedRows === 0) {
                     console.log('No user found with provided username.');
                     res.status(401).send('Invalid username.');
                 } else {
-                    console.log('Password updated successfully for user:', username);
+                    console.log('Password updated successfully for user: ', username);
                     res.status(200).send('Password updated successfully.');
                 }
             }
@@ -317,7 +317,7 @@ app.post('/api/user/twofactoractive', (req, res) => {
             'UPDATE users SET twofactor = 1 WHERE username = ? AND password = ?', [username, password],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error updating user status in database.');
                 } else if (results.affectedRows === 0) {
                     console.log('No user found with provided credentials.');
@@ -326,7 +326,7 @@ app.post('/api/user/twofactoractive', (req, res) => {
                     console.log('User already has Two-Factor Authentication active.');
                     res.status(409).send('User already has Two-Factor Authentication active.');
                 } else {
-                    console.log('User twofactor updated:', results.affectedRows);
+                    console.log('User Two-factor updated: ', results.affectedRows);
                     res.status(200).send('User twofactor set to 1.');
                 }
             }
@@ -343,14 +343,14 @@ app.post('/api/user/twofactordeactive', (req, res) => {
             [username, password],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error updating user status in database.');
                 } else if (results.affectedRows === 0) {
                     console.log('No user found with provided credentials.');
                     res.status(401).send('Invalid username or password.');
                 } else {
-                    console.log('User twofactor updated:', results.affectedRows);
-                    res.status(200).send('User twofactor set to 0.');
+                    console.log('User Two-factor updated: ', results.affectedRows);
+                    res.status(200).send('User Two-factor set to 0.');
                 }
             }
         );
@@ -437,13 +437,13 @@ app.get('/api/user/get', (req, res) => {
             [userId],
             (err, results) => {
                 if (err) {
-                    console.error('MySQL sorgu hatası:', err);
-                    res.status(500).json({error: 'Veritabanında bir hata oluştu.'});
+                    console.error('MySQL query error: ', err);
+                    res.status(500).json({error: 'An error occurred in the database.'});
                 } else if (results.length === 0) {
                     console.log('No user found with provided userid.');
-                    res.status(404).json({error: 'Geçersiz userid.'});
+                    res.status(404).json({error: 'Invalid userId.'});
                 } else {
-                    console.log('Retrieved records:', results);
+                    console.log('Retrieved records: ', results);
                     res.status(200).json(results[0]); // İlk kaydı döndür
                 }
             }
@@ -458,10 +458,10 @@ app.get('/api/user/get/all', (req, res) => {
             'SELECT userid, username, userbio, profilephoto FROM users',
             (err, results) => {
                 if (err) {
-                    console.error('Error retrieving records:', err);
+                    console.error('Error retrieving records: ', err);
                     res.status(500).send('Error retrieving records');
                 } else {
-                    console.log('Retrieved records:', results);
+                    console.log('Retrieved records: ', results);
                     res.status(200).send(results);
                 }
             }
@@ -495,7 +495,7 @@ app.post('/api/chat/upload', upload.single('photo'), (req, res) => {
         res.json({success: true, imageUrl: imageUrl});
     } else {
         // Fotoğraf yüklenemedi
-        res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
+        res.status(400).json({success: false, message: 'The photo could not be loaded.'});
     }
 });
 
@@ -514,11 +514,11 @@ app.post('/api/chat/delete/header', (req, res) => {
     // Dosyayı sil
     fs.unlink(filePath, (err) => {
         if (err) {
-            console.log('Dosya silinirken bir hata oluştu:', err);
-            res.status(500).json({success: false, message: 'Dosya silinirken bir hata oluştu.'});
+            console.log('An error occurred while deleting the file: ', err);
+            res.status(500).json({success: false, message: 'An error occurred while deleting the file.'});
         } else {
-            console.log('Dosya başarıyla silindi:', filePath);
-            res.json({success: true, message: 'Dosya başarıyla silindi.'});
+            console.log('The file has been deleted successfully: ', filePath);
+            res.json({success: true, message: 'The file has been deleted successfully.'});
         }
     });
 });
@@ -532,7 +532,7 @@ app.post('/api/chat/update', (req, res) => {
             [groupName],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error querying database.');
                 } else if (results.length === 0) {
                     console.log('Chat with provided id not found.');
@@ -551,7 +551,7 @@ app.post('/api/chat/update', (req, res) => {
                             [chat.groupname, chat.groupdes, chat.groupphoto, groupName],
                             (err, results) => {
                                 if (err) {
-                                    console.log('Error updating chat in MySQL:', err);
+                                    console.log('Error updating chat in MySQL: ', err);
                                     res.status(500).send('Error updating chat in database.');
                                 } else {
                                     console.log('Chat updated successfully.');
@@ -575,14 +575,14 @@ app.post('/api/chat/newchat', (req, res) => {
             [adminid],
             (err, results) => {
                 if (err) {
-                    console.error('Error counting chat records:', err);
+                    console.error('Error counting chat records: ', err);
                     res.status(500).send('Error counting chat records');
                     return;
                 }
 
                 const chatCount = results[0].chatCount;
                 if (chatCount >= 10) {
-                    console.log('Maximum chat limit reached for admin:', adminid);
+                    console.log('Maximum chat limit reached for admin: ', adminid);
                     res.status(403).send({error: 'Maximum chat limit reached for admin'});
                     return;
                 }
@@ -597,11 +597,11 @@ app.post('/api/chat/newchat', (req, res) => {
                                     console.log(`Group already exists with name ${groupname}.`);
                                     res.status(409).send({error: 'Conflict: Group already exists with this name.'});
                                 } else {
-                                    console.error('Error inserting record:', err);
+                                    console.error('Error inserting record: ', err);
                                     res.status(500).send('Error inserting record');
                                 }
                             } else {
-                                console.log('Inserted into MySQL:', results);
+                                console.log('Inserted into MySQL: ', results);
                                 res.status(200).send('Record inserted successfully');
                             }
                         }
@@ -627,10 +627,10 @@ app.post('/api/chat/color', (req, res) => {
             [groupColor],
             (err, results) => {
                 if (err) {
-                    console.log('Error:', err);
+                    console.log('Error: ', err);
                     res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                 } else {
-                    console.log('Group color updated:', results);
+                    console.log('Group color updated: ', results);
                     res.status(200).send({message: 'Group color updated successfully'});
                 }
             }
@@ -653,7 +653,7 @@ app.post('/api/chat/groupnametogroupid', (req, res) => {
                         const groupid = results[0].groupid;
                         res.status(200).json({groupid: groupid});
                     } else {
-                        res.status(404).json({error: 'chat not found'});
+                        res.status(404).json({error: 'Chat not found'});
                     }
                 }
             }
@@ -669,7 +669,7 @@ app.post('/api/chat/delete', (req, res) => {
             'DELETE FROM chats WHERE groupname = ? AND adminid = ?', [groupname, adminid],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error deleting chat in database.');
                 } else if (results.affectedRows === 0) {
                     console.log('No chat found with provided credentials.');
@@ -705,10 +705,10 @@ app.get('/api/chat/get', (req, res) => {
             [adminId || groupName],
             (err, results) => {
                 if (err) {
-                    console.error('Error retrieving records:', err);
+                    console.error('Error retrieving records: ', err);
                     res.status(500).send('Error retrieving records');
                 } else {
-                    console.log('Retrieved records:', results);
+                    console.log('Retrieved records: ', results);
                     res.status(200).send(results);
                 }
             }
@@ -723,10 +723,10 @@ app.get('/api/chat/get/all', (req, res) => {
             'SELECT * FROM chats',
             (err, results) => {
                 if (err) {
-                    console.error('Error retrieving records:', err);
+                    console.error('Error retrieving records: ', err);
                     res.status(500).send('Error retrieving records');
                 } else {
-                    console.log('Retrieved records:', results);
+                    console.log('Retrieved records: ', results);
                     res.status(200).send(results);
                 }
             }
@@ -743,10 +743,10 @@ app.get('/api/chat/get/id', (req, res) => {
             [groupId],
             (err, results) => {
                 if (err) {
-                    console.error('Error retrieving records:', err);
+                    console.error('Error retrieving records: ', err);
                     res.status(500).send('Error retrieving records');
                 } else {
-                    console.log('Retrieved records:', results);
+                    console.log('Retrieved records: ', results);
                     res.status(200).send(results);
                 }
             }
@@ -764,10 +764,10 @@ app.get('/api/chat/chat-messages', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(query, [startIndex, pageSize], (err, results) => {
             if (err) {
-                console.error('MySQL query error:', err);
+                console.error('MySQL query error: ', err);
                 res.status(500).send({error: 'Internal Server Error: Please try again later.'});
             } else {
-                console.log('Chat messages retrieved from MySQL:', results);
+                console.log('Chat messages retrieved from MySQL: ', results);
                 res.status(200).send(results);
             }
         });
@@ -783,13 +783,13 @@ app.post('/api/chat/newmessage', (req, res) => {
             [groupId, senderid, content, timestamp],
             (err, results) => {
                 if (err) {
-                    console.error('MySQL query error:', err);
+                    console.error('MySQL query error: ', err);
                     res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                 } else if (results.affectedRows === 0) {
                     console.error('No rows were affected. Check your input data.');
                     res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
                 } else {
-                    console.log('New chat message added to MySQL:', results);
+                    console.log('New chat message added to MySQL: ', results);
                     res.status(200).send({message: 'New chat message successfully added.'});
                 }
             }
@@ -815,8 +815,8 @@ const uploadPost = multer({storage: storagePost}).single('photo');
 app.post('/api/post/upload', (req, res) => {
     uploadPost(req, res, (err) => {
         if (err) {
-            console.log('Error uploading profile photo:', err);
-            res.status(400).json({success: false, message: 'Fotoğraf yüklenemedi.'});
+            console.log('Error uploading profile photo: ', err);
+            res.status(400).json({success: false, message: 'The photo could not be loaded.'});
         } else {
             const imageUrl = `http://23.26.248.43/uploads/post/${req.file.filename}`;
             res.json({success: true, imageUrl: imageUrl});
@@ -833,7 +833,7 @@ app.post('/api/post/newpost', (req, res) => {
             [postname, userid],
             (selectErr, selectResults) => {
                 if (selectErr) {
-                    console.error('Error selecting record:', selectErr);
+                    console.error('Error selecting record: ', selectErr);
                     res.status(500).send('Error selecting record');
                 } else {
                     if (selectResults.length > 0) {
@@ -846,10 +846,10 @@ app.post('/api/post/newpost', (req, res) => {
                                 [userid, postphoto, postname, postdes, postcategory, posttime],
                                 (insertErr, insertResults) => {
                                     if (insertErr) {
-                                        console.error('Error inserting record:', insertErr);
+                                        console.error('Error inserting record: ', insertErr);
                                         res.status(500).send('Error inserting record');
                                     } else {
-                                        console.log('Inserted into MySQL:', insertResults);
+                                        console.log('Inserted into MySQL: ', insertResults);
                                         res.status(200).send('Record inserted successfully');
                                     }
                                 }
@@ -871,11 +871,11 @@ app.post('/api/post/delete', (req, res) => {
             [userid, postname],
             (err, results) => {
                 if (err) {
-                    console.error('Error deleting record:', err);
+                    console.error('Error deleting record: ', err);
                     res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                 } else {
                     if (results.affectedRows > 0) {
-                        console.log('Deleted from MySQL:', results);
+                        console.log('Deleted from MySQL: ', results);
                         res.status(200).send();
                     } else {
                         console.log('No matching record found.');
@@ -894,21 +894,21 @@ app.post('/api/post/save', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query('SELECT * FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error, saveResults) => {
             if (error) {
-                console.error('Sorgu hatası: ' + error.message);
-                res.status(500).json({success: false, message: 'Veritabanı hatası'});
+                console.error('Query error: ' + error.message);
+                res.status(500).json({success: false, message: 'Database error'});
             } else {
                 if (saveResults.length > 0) {
                     // Kayıt varsa, bu kaydı "saves" tablosundan sil
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query('DELETE FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error) => {
                             if (error) {
-                                console.error('Silme hatası: ' + error.message);
-                                res.status(500).json({success: false, message: 'Veritabanı hatası'});
+                                console.error('Delete error: ' + error.message);
+                                res.status(500).json({success: false, message: 'Database error'});
                             } else {
-                                console.log('Kayıt silindi.');
+                                console.log('The record has been deleted.');
                                 res.json({
                                     success: true,
-                                    message: 'Gönderi kaydedildi ve kayıt silindi.'
+                                    message: 'The post has been saved and the record has been deleted.'
                                 });
                             }
                         });
@@ -918,13 +918,13 @@ app.post('/api/post/save', (req, res) => {
                     getConnectionAndExecute(req, res, (connection) => {
                         connection.query('INSERT INTO saves (postid, userid) VALUES (?, ?)', [postid, userid], (error) => {
                             if (error) {
-                                console.error('Ekleme hatası: ' + error.message);
-                                res.status(500).json({success: false, message: 'Veritabanı hatası'});
+                                console.error('Addition error: ' + error.message);
+                                res.status(500).json({success: false, message: 'Database error'});
                             } else {
-                                console.log('Yeni kayıt eklendi.');
+                                console.log('New record added.');
                                 res.json({
                                     success: true,
-                                    message: 'Gönderi kaydedildi ve yeni kayıt eklendi.'
+                                    message: 'Post saved and new record added.'
                                 });
                             }
                         });
@@ -984,7 +984,7 @@ app.get('/api/post/savelist', (req, res) => {
             [userid],
             (err, results) => {
                 if (err) {
-                    console.error('Error getting saved posts:', err);
+                    console.error('Error getting saved posts: ', err);
                     res.status(500).json({error: 'Error getting saved posts'});
                 } else {
                     const postIds = results.map(row => row.postid);
@@ -996,7 +996,7 @@ app.get('/api/post/savelist', (req, res) => {
                             [postIds],
                             (postErr, postResults) => {
                                 if (postErr) {
-                                    console.error('Error getting posts:', postErr);
+                                    console.error('Error getting posts: ', postErr);
                                     res.status(500).json({error: 'Error getting posts'});
                                 } else {
                                     const userIds = postResults.map(row => row.userid);
@@ -1007,7 +1007,7 @@ app.get('/api/post/savelist', (req, res) => {
                                         [userIds],
                                         (userErr, userResults) => {
                                             if (userErr) {
-                                                console.error('Error getting user information:', userErr);
+                                                console.error('Error getting user information: ', userErr);
                                                 res.status(500).json({error: 'Error getting user information'});
                                             } else {
                                                 // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
@@ -1054,7 +1054,7 @@ app.get('/api/post/get/page/follows', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(followedUsersQuery, [userid], (err, followedUsers) => {
             if (err) {
-                console.error('Takip edilen kullanıcıları alırken bir hata oluştu:', err);
+                console.error('Takip edilen kullanıcıları alırken bir hata oluştu: ', err);
                 res.status(500).json({error: 'Sunucu hatası'});
                 return;
             }
@@ -1063,7 +1063,7 @@ app.get('/api/post/get/page/follows', (req, res) => {
             getConnectionAndExecute(req, res, (connection) => {
                 connection.query(getPostsQuery, [userid, startIndex, parsedPageSize], (err, posts) => {
                     if (err) {
-                        console.error('Takip edilen kullanıcıların postlarını alırken bir hata oluştu:', err);
+                        console.error('Takip edilen kullanıcıların postlarını alırken bir hata oluştu: ', err);
                         res.status(500).json({error: 'Sunucu hatası'});
                         return;
                     }
@@ -1081,7 +1081,7 @@ app.get('/api/post/get/page/follows', (req, res) => {
                                 [userIds],
                                 (userErr, userResults) => {
                                     if (userErr) {
-                                        console.error('Kullanıcı bilgilerini alırken bir hata oluştu:', userErr);
+                                        console.error('Kullanıcı bilgilerini alırken bir hata oluştu: ', userErr);
                                         res.status(500).json({error: 'Kullanıcı bilgilerini alırken hata oluştu'});
                                     } else {
                                         // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
@@ -1111,7 +1111,7 @@ app.get('/api/post/get/all', (req, res) => {
             'SELECT * FROM posts',
             (err, postResults) => {
                 if (err) {
-                    console.error('Error retrieving records:', err);
+                    console.error('Error retrieving records: ', err);
                     res.status(500).send('Error retrieving records');
                 } else {
                     if (postResults.length === 0) {
@@ -1127,7 +1127,7 @@ app.get('/api/post/get/all', (req, res) => {
                                 [userIds],
                                 (userErr, userResults) => {
                                     if (userErr) {
-                                        console.error('Error getting user information:', userErr);
+                                        console.error('Error getting user information: ', userErr);
                                         res.status(500).json({error: 'Error getting user information'});
                                     } else {
                                         // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
@@ -1161,7 +1161,7 @@ app.get('/api/post/get/page/all', (req, res) => {
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(query, [startIndex, pageSize], (err, postResults) => {
             if (err) {
-                console.error('MySQL query error:', err);
+                console.error('MySQL query error: ', err);
                 res.status(500).send({error: 'Internal Server Error: Please try again later.'});
             } else {
                 if (postResults.length === 0) {
@@ -1177,7 +1177,7 @@ app.get('/api/post/get/page/all', (req, res) => {
                             [userIds],
                             (userErr, userResults) => {
                                 if (userErr) {
-                                    console.error('Error getting user information:', userErr);
+                                    console.error('Error getting user information: ', userErr);
                                     res.status(500).json({error: 'Error getting user information'});
                                 } else {
                                     // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
@@ -1209,7 +1209,7 @@ app.get('/api/post/get/id', (req, res) => {
             [userid],
             (err, postResults) => {
                 if (err) {
-                    console.error('Error retrieving records:', err);
+                    console.error('Error retrieving records: ', err);
                     res.status(500).send('Error retrieving records');
                 } else {
                     if (postResults.length === 0) {
@@ -1225,7 +1225,7 @@ app.get('/api/post/get/id', (req, res) => {
                                 [userIds],
                                 (userErr, userResults) => {
                                     if (userErr) {
-                                        console.error('Error getting user information:', userErr);
+                                        console.error('Error getting user information: ', userErr);
                                         res.status(500).json({error: 'Error getting user information'});
                                     } else {
                                         // Gönderi bilgilerini ve kullanıcı bilgilerini birleştirerek sonuçları oluştur
@@ -1259,7 +1259,7 @@ app.post('/api/post/like', (req, res) => {
             [postname, postphoto],
             (err, results) => {
                 if (err) {
-                    console.error('Hata:', err);
+                    console.error('Hata: ', err);
                     res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                 } else {
                     if (results.length === 0) {
@@ -1274,7 +1274,7 @@ app.post('/api/post/like', (req, res) => {
                                 [userid, postid],
                                 (err, likeResults) => {
                                     if (err) {
-                                        console.error('Hata:', err);
+                                        console.error('Hata: ', err);
                                         res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                     } else {
                                         if (likeResults.length === 0) {
@@ -1285,10 +1285,10 @@ app.post('/api/post/like', (req, res) => {
                                                     [userid, postid],
                                                     (err, insertResult) => {
                                                         if (err) {
-                                                            console.error('Hata:', err);
+                                                            console.error('Hata: ', err);
                                                             res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                                         } else {
-                                                            console.log('MySQL\'e eklendi:', insertResult);
+                                                            console.log('MySQL\'e eklendi: ', insertResult);
 
                                                             // "posts" tablosunda "postlike" değerini artır
                                                             getConnectionAndExecute(req, res, (connection) => {
@@ -1297,10 +1297,10 @@ app.post('/api/post/like', (req, res) => {
                                                                     [postid],
                                                                     (err, updateResult) => {
                                                                         if (err) {
-                                                                            console.error('Hata:', err);
+                                                                            console.error('Hata: ', err);
                                                                             res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                                                         } else {
-                                                                            console.log('Post beğenisi artırıldı:', updateResult);
+                                                                            console.log('Post beğenisi artırıldı: ', updateResult);
                                                                             res.status(200).send();
                                                                         }
                                                                     }
@@ -1318,10 +1318,10 @@ app.post('/api/post/like', (req, res) => {
                                                     [userid, postid],
                                                     (err, deleteResult) => {
                                                         if (err) {
-                                                            console.error('Hata:', err);
+                                                            console.error('Hata: ', err);
                                                             res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                                         } else {
-                                                            console.log('MySQL\'den silindi:', deleteResult);
+                                                            console.log('MySQL\'den silindi: ', deleteResult);
 
                                                             // "posts" tablosunda "postlike" değerini azalt
                                                             connection.query(
@@ -1329,10 +1329,10 @@ app.post('/api/post/like', (req, res) => {
                                                                 [postid],
                                                                 (err, updateResult) => {
                                                                     if (err) {
-                                                                        console.error('Hata:', err);
+                                                                        console.error('Hata: ', err);
                                                                         res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                                                     } else {
-                                                                        console.log('Post beğenisi azaltıldı:', updateResult);
+                                                                        console.log('Post beğenisi azaltıldı: ', updateResult);
                                                                         res.status(200).send();
                                                                     }
                                                                 }
@@ -1363,7 +1363,7 @@ app.post('/api/post/unlike', (req, res) => {
             [postname, postphoto],
             (err, results) => {
                 if (err) {
-                    console.error('Hata:', err);
+                    console.error('Hata: ', err);
                     res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                 } else {
                     if (results.length === 0) {
@@ -1378,7 +1378,7 @@ app.post('/api/post/unlike', (req, res) => {
                                 [userid, postid],
                                 (err, unlikeResults) => {
                                     if (err) {
-                                        console.error('Hata:', err);
+                                        console.error('Hata: ', err);
                                         res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                     } else {
                                         if (unlikeResults.length === 0) {
@@ -1389,10 +1389,10 @@ app.post('/api/post/unlike', (req, res) => {
                                                     [userid, postid],
                                                     (err, insertResult) => {
                                                         if (err) {
-                                                            console.error('Hata:', err);
+                                                            console.error('Hata: ', err);
                                                             res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                                         } else {
-                                                            console.log('MySQL\'e eklendi:', insertResult);
+                                                            console.log('MySQL\'e eklendi: ', insertResult);
 
                                                             // "posts" tablosunda "postlike" değerini azalt
                                                             getConnectionAndExecute(req, res, (connection) => {
@@ -1401,10 +1401,10 @@ app.post('/api/post/unlike', (req, res) => {
                                                                     [postid],
                                                                     (err, updateResult) => {
                                                                         if (err) {
-                                                                            console.error('Hata:', err);
+                                                                            console.error('Hata: ', err);
                                                                             res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                                                         } else {
-                                                                            console.log('Post beğenisi azaltıldı:', updateResult);
+                                                                            console.log('Post beğenisi azaltıldı: ', updateResult);
                                                                             res.status(200).send();
                                                                         }
                                                                     }
@@ -1422,10 +1422,10 @@ app.post('/api/post/unlike', (req, res) => {
                                                     [userid, postid],
                                                     (err, deleteResult) => {
                                                         if (err) {
-                                                            console.error('Hata:', err);
+                                                            console.error('Hata: ', err);
                                                             res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                                         } else {
-                                                            console.log('MySQL\'den silindi:', deleteResult);
+                                                            console.log('MySQL\'den silindi: ', deleteResult);
 
                                                             // "posts" tablosunda "postlike" değerini artır
                                                             connection.query(
@@ -1433,10 +1433,10 @@ app.post('/api/post/unlike', (req, res) => {
                                                                 [postid],
                                                                 (err, updateResult) => {
                                                                     if (err) {
-                                                                        console.error('Hata:', err);
+                                                                        console.error('Hata: ', err);
                                                                         res.status(500).send({error: 'Internal Server Error: Lütfen daha sonra tekrar deneyin.'});
                                                                     } else {
-                                                                        console.log('Post beğenisi artırıldı:', updateResult);
+                                                                        console.log('Post beğenisi artırıldı: ', updateResult);
                                                                         res.status(200).send();
                                                                     }
                                                                 }
@@ -1467,13 +1467,13 @@ app.post('/api/follow/add', (req, res) => {
             [followerid, followedid],
             (err, results) => {
                 if (err) {
-                    console.error('MySQL query error:', err);
+                    console.error('MySQL query error: ', err);
                     res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                 } else if (results.affectedRows === 0) {
                     console.error('No rows were affected. Check your input data.');
                     res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
                 } else {
-                    console.log('Inserted into MySQL:', results);
+                    console.log('Inserted into MySQL: ', results);
                     res.status(200).send();
                 }
             }
@@ -1490,13 +1490,13 @@ app.post('/api/follow/remove', (req, res) => {
             [followerid, followedid],
             (err, results) => {
                 if (err) {
-                    console.error('MySQL query error:', err);
+                    console.error('MySQL query error: ', err);
                     res.status(500).send({error: 'Internal Server Error: Please try again later.'});
                 } else if (results.affectedRows === 0) {
                     console.error('No rows were affected. Check your input data.');
                     res.status(400).send({error: 'Bad Request: Check your input data and try again.'});
                 } else {
-                    console.log('Deleted from MySQL:', results);
+                    console.log('Deleted from MySQL: ', results);
                     res.status(200).send();
                 }
             }
@@ -1534,7 +1534,7 @@ app.post('/api/follow/followstatus', (req, res) => {
         connection.query('SELECT followedid FROM follow WHERE followerid = ?', [followerId],
             (err, results) => {
                 if (err) {
-                    console.error('Error executing MySQL query:', err);
+                    console.error('Error executing MySQL query: ', err);
                     res.status(500).json({error: 'An error occurred while fetching data'});
                 } else {
                     const followedIds = results.map(result => result.followedid);
