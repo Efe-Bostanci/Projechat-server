@@ -633,12 +633,12 @@ app.post('/api/chat/newchat', (req, res) => {
 
 function generateToken() {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let token = '';
     const tokenLength = 10;
+    let token = '';
 
     for (let i = 0; i < tokenLength; i++) {
         const randomIndex = Math.floor(Math.random() * characters.length);
-        token += characters.charAt(randomIndex);
+        token += characters[randomIndex];
     }
 
     return token;
