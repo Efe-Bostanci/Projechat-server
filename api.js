@@ -567,8 +567,7 @@ app.post('/api/chat/update', (req, res) => {
 });
 
 app.post('/api/chat/newchat', (req, res) => {
-    const { adminid, groupphoto, groupname, groupdes } = req.body;
-    const token = generateToken(); // Token oluştur
+    const {adminid, groupphoto, groupname, groupdes} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
@@ -584,45 +583,27 @@ app.post('/api/chat/newchat', (req, res) => {
                 const chatCount = results[0].chatCount;
                 if (chatCount >= 10) {
                     console.log('Maximum chat limit reached for admin: ', adminid);
-                    res.status(403).send({ error: 'Maximum chat limit reached for admin' });
+                    res.status(403).send({error: 'Maximum chat limit reached for admin'});
                     return;
                 }
 
                 getConnectionAndExecute(req, res, (connection) => {
                     connection.query(
-                        'SELECT grouptoken FROM chats WHERE grouptoken = ?',
-                        [token],
+                        'INSERT INTO chats (adminid, groupphoto, groupname, groupdes) VALUES (?, ?, ?, ?)',
+                        [adminid, groupphoto, groupname, groupdes],
                         (err, results) => {
                             if (err) {
-                                console.error('Error checking for existing token: ', err);
-                                res.status(500).send('Error checking for existing token');
-                                return;
-                            }
-
-                            if (results.length > 0) {
-                                console.log(`Token already exists: ${token}`);
-                                res.status(409).send({ error: 'Conflict: Token already exists.' });
-                                return;
-                            }
-
-                            connection.query(
-                                'INSERT INTO chats (adminid, grouptoken, groupphoto, groupname, groupdes) VALUES (?, ?, ?, ?, ?)',
-                                [adminid, token, groupphoto, groupname, groupdes],
-                                (err, results) => {
-                                    if (err) {
-                                        if (err.code === 'ER_DUP_ENTRY') {
-                                            console.log(`Group already exists with name ${groupname}.`);
-                                            res.status(409).send({ error: 'Conflict: Group already exists with this name.' });
-                                        } else {
-                                            console.error('Error inserting record: ', err);
-                                            res.status(500).send('Error inserting record');
-                                        }
-                                    } else {
-                                        console.log('Inserted into MySQL: ', results);
-                                        res.status(200).send('Record inserted successfully');
-                                    }
+                                if (err.code === 'ER_DUP_ENTRY') {
+                                    console.log(`Group already exists with name ${groupname}.`);
+                                    res.status(409).send({error: 'Conflict: Group already exists with this name.'});
+                                } else {
+                                    console.error('Error inserting record: ', err);
+                                    res.status(500).send('Error inserting record');
                                 }
-                            );
+                            } else {
+                                console.log('Inserted into MySQL: ', results);
+                                res.status(200).send('Record inserted successfully');
+                            }
                         }
                     );
                 });
@@ -630,20 +611,6 @@ app.post('/api/chat/newchat', (req, res) => {
         );
     });
 });
-
-function generateToken() {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const tokenLength = 10;
-    let token = '';
-
-    for (let i = 0; i < tokenLength; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        token += characters[randomIndex];
-    }
-
-    return token;
-}
-
 
 app.post('/api/chat/color', (req, res) => {
     const {groupcolor} = req.body;
