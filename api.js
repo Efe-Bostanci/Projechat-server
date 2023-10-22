@@ -567,7 +567,7 @@ app.post('/api/chat/update', (req, res) => {
 });
 
 app.post('/api/chat/newchat', (req, res) => {
-    const {adminid, groupphoto, groupname, groupdes} = req.body;
+    const {adminid, groupphoto, groupname, groupdes, groptoken} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
@@ -589,8 +589,8 @@ app.post('/api/chat/newchat', (req, res) => {
 
                 getConnectionAndExecute(req, res, (connection) => {
                     connection.query(
-                        'INSERT INTO chats (adminid, groupphoto, groupname, groupdes) VALUES (?, ?, ?, ?)',
-                        [adminid, groupphoto, groupname, groupdes],
+                        'INSERT INTO chats (adminid, groupphoto, groupname, groupdes, grouptoken) VALUES (?, ?, ?, ?, ?)',
+                        [adminid, groupphoto, groupname, groupdes, grouptoken],
                         (err, results) => {
                             if (err) {
                                 if (err.code === 'ER_DUP_ENTRY') {
