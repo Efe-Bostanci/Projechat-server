@@ -567,7 +567,7 @@ app.post('/api/chat/update', (req, res) => {
 });
 
 app.post('/api/chat/newchat', (req, res) => {
-    const {adminid, groupphoto, groupname, groupdes, groptoken} = req.body;
+    const {adminid, groupphoto, groupname, groupdes, grouptoken} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
