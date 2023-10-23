@@ -240,19 +240,18 @@ app.post('/api/user/login/google', (req, res) => {
 
 app.post('/api/user/disableuser', (req, res) => {
     const {username, password} = req.body;
-
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'UPDATE users SET status = 0 WHERE username = ? AND password = ?', [username, password],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL: ', err);
+                    console.log('Error querying MySQL:', err);
                     res.status(500).send('Error updating user status in database.');
                 } else if (results.affectedRows === 0) {
                     console.log('No user found with provided credentials.');
                     res.status(401).send('Invalid username or password.');
                 } else {
-                    console.log('User status updated: ', results.affectedRows);
+                    console.log('User status updated:', results.affectedRows);
                     res.status(200).send('User status set to 0.');
                 }
             }
@@ -267,14 +266,14 @@ app.post('/api/user/deleteuser', (req, res) => {
             `DELETE FROM users WHERE username = ? AND password = ?`, [username, password],
             (err, result) => {
                 if (err) {
-                    console.error('Kullanıcı hesabını silme hatası:', err);
-                    res.status(500).send('Kullanıcı hesabını silme hatası.');
+                    console.error('Error querying MySQL:', err);
+                    res.status(500).send('Error updating user status in database.');
                 } else if (result.affectedRows > 0) {
-                    console.log('Kullanıcı adı ve/veya şifre yanlış.');
-                    res.status(401).send('Kullanıcı adı ve/veya şifre yanlış.');
+                    console.log('No user found with provided credentials.');
+                    res.status(401).send('Invalid username or password.');
                 } else {
-                    console.log('Kullanıcı hesabı başarıyla silindi.');
-                    res.status(200).send('Kullanıcı hesabı başarıyla silindi.');
+                    console.log('The user account has been successfully deleted.');
+                    res.status(200).send('The user account has been successfully deleted.');
                 }
 
             });
