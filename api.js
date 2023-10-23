@@ -261,17 +261,11 @@ app.post('/api/user/disableuser', (req, res) => {
 });
 
 app.post('/api/user/deleteuser', (req, res) => {
-    const { username, password } = req.body;
-
-    dbPool.getConnection((err, connection) => {
-        if (err) {
-            console.error('Veritabanı bağlantısı hatası:', err);
-            res.status(500).send('Veritabanı bağlantısı hatası.');
-        } else {
-            // İlgili kullanıcıyı silme sorgusu
-            const deleteQuery = `DELETE FROM kullanıcılar WHERE kullanıcı_adı = ? AND şifre = ?`;
-
-            connection.query(deleteQuery, [username, password], (err, result) => {
+    const {username, password} = req.body;
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            `DELETE FROM users WHERE username = ? AND password = ?`, [username, password],
+            (err, result) => {
                 if (err) {
                     console.error('Kullanıcı hesabını silme hatası:', err);
                     res.status(500).send('Kullanıcı hesabını silme hatası.');
@@ -286,7 +280,6 @@ app.post('/api/user/deleteuser', (req, res) => {
                 }
                 connection.release();
             });
-        }
     });
 });
 
@@ -989,14 +982,14 @@ app.post('/api/post/save', (req, res) => {
 });
 
 app.post('/api/post/unsave', (req, res) => {
-    const { userid, postid } = req.body;
+    const {userid, postid} = req.body;
 
     // "saves" tablosunda belirtilen postid ve userid ile kayıt var mı kontrol et
     getConnectionAndExecute(req, res, (connection) => {
         connection.query('SELECT * FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error, saveResults) => {
             if (error) {
                 console.error('Query error: ' + error.message);
-                res.status(500).json({ success: false, message: 'Database error' });
+                res.status(500).json({success: false, message: 'Database error'});
             } else {
                 if (saveResults.length > 0) {
                     // Kayıt varsa, bu kaydı "saves" tablosundan sil
@@ -1004,7 +997,7 @@ app.post('/api/post/unsave', (req, res) => {
                         connection.query('DELETE FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error) => {
                             if (error) {
                                 console.error('Delete error: ' + error.message);
-                                res.status(500).json({ success: false, message: 'Database error' });
+                                res.status(500).json({success: false, message: 'Database error'});
                             } else {
                                 console.log('The record has been deleted.');
                                 res.json({
