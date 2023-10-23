@@ -33,29 +33,6 @@ const getConnectionAndExecute = (req, res, callback) => {
     });
 };
 
-const ninetyDaysWatchman = (connection) => {
-    const today = new Date();
-    today.setDate(today.getDate() - 90); // 90 gün önceki tarih
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD formatına dönüştürme
-
-    const query = `DELETE FROM users WHERE deletedate <= '${formattedDate}'`;
-    connection.query(query, (err, result) => {
-        if (err) {
-            console.error('Kullanıcıları silme hatası:', err);
-        } else {
-            console.log('Eski kullanıcılar silindi.');
-        }
-    });
-};
-
-// Her gün otomatik hesap silme görevini başlat
-setInterval(() => {
-    getConnectionAndExecute(null, null, (connection) => {
-        ninetyDaysWatchman(connection);
-        connection.release();
-    });
-}, 24 * 60 * 60 * 1000);
-
 //---------------------------------------------------------user---------------------------------------------------------
 const storageUser = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -238,45 +215,25 @@ app.post('/api/user/login/google', (req, res) => {
     });
 });
 
-app.post('/api/user/disableuser', (req, res) => {
+app.post('/api/user/deleteuser', (req, res) => {
     const {username, password} = req.body;
+
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
             'UPDATE users SET status = 0 WHERE username = ? AND password = ?', [username, password],
             (err, results) => {
                 if (err) {
-                    console.log('Error querying MySQL:', err);
+                    console.log('Error querying MySQL: ', err);
                     res.status(500).send('Error updating user status in database.');
                 } else if (results.affectedRows === 0) {
                     console.log('No user found with provided credentials.');
                     res.status(401).send('Invalid username or password.');
                 } else {
-                    console.log('User status updated:', results.affectedRows);
+                    console.log('User status updated: ', results.affectedRows);
                     res.status(200).send('User status set to 0.');
                 }
             }
         );
-    });
-});
-
-app.post('/api/user/deleteuser', (req, res) => {
-    const {username, password} = req.body;
-    getConnectionAndExecute(req, res, (connection) => {
-        connection.query(
-            `DELETE FROM users WHERE username = ? AND password = ?`, [username, password],
-            (err, result) => {
-                if (err) {
-                    console.error('Error querying MySQL:', err);
-                    res.status(500).send('Error updating user status in database.');
-                } else if (result.affectedRows > 0) {
-                    console.log('No user found with provided credentials.');
-                    res.status(401).send('Invalid username or password.');
-                } else {
-                    console.log('The user account has been successfully deleted.');
-                    res.status(200).send('The user account has been successfully deleted.');
-                }
-
-            });
     });
 });
 
@@ -979,14 +936,14 @@ app.post('/api/post/save', (req, res) => {
 });
 
 app.post('/api/post/unsave', (req, res) => {
-    const {userid, postid} = req.body;
+    const { userid, postid } = req.body;
 
     // "saves" tablosunda belirtilen postid ve userid ile kayıt var mı kontrol et
     getConnectionAndExecute(req, res, (connection) => {
         connection.query('SELECT * FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error, saveResults) => {
             if (error) {
                 console.error('Query error: ' + error.message);
-                res.status(500).json({success: false, message: 'Database error'});
+                res.status(500).json({ success: false, message: 'Database error' });
             } else {
                 if (saveResults.length > 0) {
                     // Kayıt varsa, bu kaydı "saves" tablosundan sil
@@ -994,7 +951,7 @@ app.post('/api/post/unsave', (req, res) => {
                         connection.query('DELETE FROM saves WHERE postid = ? AND userid = ?', [postid, userid], (error) => {
                             if (error) {
                                 console.error('Delete error: ' + error.message);
-                                res.status(500).json({success: false, message: 'Database error'});
+                                res.status(500).json({ success: false, message: 'Database error' });
                             } else {
                                 console.log('The record has been deleted.');
                                 res.json({
