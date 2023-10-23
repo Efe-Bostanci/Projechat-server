@@ -269,16 +269,14 @@ app.post('/api/user/deleteuser', (req, res) => {
                 if (err) {
                     console.error('Kullanıcı hesabını silme hatası:', err);
                     res.status(500).send('Kullanıcı hesabını silme hatası.');
+                } else if (result.affectedRows > 0) {
+                    console.log('Kullanıcı adı ve/veya şifre yanlış.');
+                    res.status(401).send('Kullanıcı adı ve/veya şifre yanlış.');
                 } else {
-                    if (result.affectedRows > 0) {
-                        console.log('Kullanıcı hesabı başarıyla silindi.');
-                        res.status(200).send('Kullanıcı hesabı başarıyla silindi.');
-                    } else {
-                        console.log('Kullanıcı adı ve/veya şifre yanlış.');
-                        res.status(401).send('Kullanıcı adı ve/veya şifre yanlış.');
-                    }
+                    console.log('Kullanıcı hesabı başarıyla silindi.');
+                    res.status(200).send('Kullanıcı hesabı başarıyla silindi.');
                 }
-                connection.release();
+
             });
     });
 });
