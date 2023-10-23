@@ -33,6 +33,29 @@ const getConnectionAndExecute = (req, res, callback) => {
     });
 };
 
+const ninetyDaysWatchman = (connection) => {
+    const today = new Date();
+    today.setDate(today.getDate() - 90); // 90 gün önceki tarih
+    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD formatına dönüştürme
+
+    const query = `DELETE FROM users WHERE deletedate <= '${formattedDate}'`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.error('Kullanıcıları silme hatası:', err);
+        } else {
+            console.log('Eski kullanıcılar silindi.');
+        }
+    });
+};
+
+// Her gün otomatik hesap silme görevini başlat
+setInterval(() => {
+    getConnectionAndExecute(null, null, (connection) => {
+        ninetyDaysWatchman(connection);
+        connection.release();
+    });
+}, 24 * 60 * 60 * 1000);
+
 //---------------------------------------------------------user---------------------------------------------------------
 const storageUser = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -215,7 +238,7 @@ app.post('/api/user/login/google', (req, res) => {
     });
 });
 
-app.post('/api/user/deleteuser', (req, res) => {
+app.post('/api/user/disableuser', (req, res) => {
     const {username, password} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
@@ -234,6 +257,36 @@ app.post('/api/user/deleteuser', (req, res) => {
                 }
             }
         );
+    });
+});
+
+app.post('/api/user/deleteuser', (req, res) => {
+    const { username, password } = req.body;
+
+    dbPool.getConnection((err, connection) => {
+        if (err) {
+            console.error('Veritabanı bağlantısı hatası:', err);
+            res.status(500).send('Veritabanı bağlantısı hatası.');
+        } else {
+            // İlgili kullanıcıyı silme sorgusu
+            const deleteQuery = `DELETE FROM kullanıcılar WHERE kullanıcı_adı = ? AND şifre = ?`;
+
+            connection.query(deleteQuery, [username, password], (err, result) => {
+                if (err) {
+                    console.error('Kullanıcı hesabını silme hatası:', err);
+                    res.status(500).send('Kullanıcı hesabını silme hatası.');
+                } else {
+                    if (result.affectedRows > 0) {
+                        console.log('Kullanıcı hesabı başarıyla silindi.');
+                        res.status(200).send('Kullanıcı hesabı başarıyla silindi.');
+                    } else {
+                        console.log('Kullanıcı adı ve/veya şifre yanlış.');
+                        res.status(401).send('Kullanıcı adı ve/veya şifre yanlış.');
+                    }
+                }
+                connection.release();
+            });
+        }
     });
 });
 
