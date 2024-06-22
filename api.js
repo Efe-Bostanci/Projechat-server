@@ -429,11 +429,11 @@ app.post('/api/user/emailtousername', (req, res) => {
 });
 
 app.get('/api/user/get', (req, res) => {
-    const userId = req.query.userid; //çalışıyorsa dokunma
+    const userId = req.query.userid; //çalışıyorsa sakın dokunma
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'SELECT username, userbio, profilephoto, email FROM users WHERE userid = ?',
+            'SELECT username, name, lastname, userbio, profilephoto, email FROM users WHERE userid = ?',
             [userId],
             (err, results) => {
                 if (err) {
