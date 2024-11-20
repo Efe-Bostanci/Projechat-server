@@ -156,11 +156,11 @@ app.put('/api/user/changepassword', (req, res) => {
 });
 
 app.post('/api/user/forgotpassword', (req, res) => {
-    const {username, email} = req.body;
+    const {email} = req.body;
 
     connection.query(
-        'SELECT * FROM users WHERE username = ? AND email = ?',
-        [username, email],
+        'SELECT * FROM users WHERE email = ?',
+        [email],
         (err, results) => {
             if (err) {
                 console.log('Error querying MySQL:', err);
