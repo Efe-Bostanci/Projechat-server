@@ -180,24 +180,26 @@ app.post('/api/user/forgotpassword', (req, res) => {
 });
 
 app.put('/api/user/createpassword', (req, res) => {
-    const {username, newPassword} = req.body;
+    const {email, newPassword} = req.body;
 
-    connection.query(
-        'UPDATE users SET password = ? WHERE username = ?',
-        [newPassword, username],
-        (err, results) => {
-            if (err) {
-                console.log('Error updating password in the database:', err);
-                res.status(500).send('Error updating password.');
-            } else if (results.affectedRows === 0) {
-                console.log('No user found with provided username.');
-                res.status(401).send('Invalid username.');
-            } else {
-                console.log('Password updated successfully for user:', username);
-                res.status(200).send('Password updated successfully.');
+    getConnectionAndExecute(req, res, (connection) => {
+        connection.query(
+            'UPDATE users SET password = ? WHERE email = ?',
+            [newPassword, email],
+            (err, results) => {
+                if (err) {
+                    console.log('Error updating password in the database: ', err);
+                    res.status(500).send('Error updating password.');
+                } else if (results.affectedRows === 0) {
+                    console.log('No user found with provided username.');
+                    res.status(401).send('Invalid username.');
+                } else {
+                    console.log('Password updated successfully for user: ', email);
+                    res.status(200).send('Password updated successfully');
+                }
             }
-        }
-    );
+        );
+    });
 });
 
 app.post('/api/user/update', (req, res) => {
