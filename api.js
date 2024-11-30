@@ -263,27 +263,9 @@ app.put('/api/user/changepassword', (req, res) => {
 app.post('/api/user/forgotpassword', (req, res) => {
     const {email} = req.body;
 
-<<<<<<< HEAD
-    connection.query(
-        'SELECT * FROM users WHERE email = ?',
-        [email],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error retrieving user information from database.');
-            } else if (results.length === 0) {
-                console.log('No user found with provided credentials.');
-                res.status(401).send('Invalid username or email.');
-            } else if (results[0].twofactor === 1) {
-                console.log('İki faktörlü doğrulama gerekiyor.');
-                res.status(200).send({twofactor: 1});
-            } else {
-                console.log('User found:', results[0]);
-                res.status(200).send('User information is correct.');
-=======
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'SELECT * FROM users WHERE AND email = ?',
+            'SELECT * FROM users WHERE email = ?',
             [email],
             (err, results) => {
                 if (err) {
@@ -299,7 +281,6 @@ app.post('/api/user/forgotpassword', (req, res) => {
                     console.log('User found: ', results[0]);
                     res.status(200).send('User information is correct.');
                 }
->>>>>>> origin/main
             }
         );
     });
@@ -307,46 +288,6 @@ app.post('/api/user/forgotpassword', (req, res) => {
 
 app.put('/api/user/createpassword', (req, res) => {
     const {email, newPassword} = req.body;
-<<<<<<< HEAD
-
-    getConnectionAndExecute(req, res, (connection) => {
-        connection.query(
-            'UPDATE users SET password = ? WHERE email = ?',
-            [newPassword, email],
-            (err, results) => {
-                if (err) {
-                    console.log('Error updating password in the database: ', err);
-                    res.status(500).send('Error updating password.');
-                } else if (results.affectedRows === 0) {
-                    console.log('No user found with provided username.');
-                    res.status(401).send('Invalid username.');
-                } else {
-                    console.log('Password updated successfully for user: ', email);
-                    res.status(200).send('Password updated successfully');
-                }
-            }
-        );
-    });
-});
-
-app.post('/api/user/update', (req, res) => {
-    const {userid, username, userbio, profilephoto} = req.body;
-
-    // Veritabanında chati bul
-    connection.query(
-        'SELECT * FROM users WHERE username = ?',
-        [userid],
-        (err, results) => {
-            if (err) {
-                console.log('Error querying MySQL:', err);
-                res.status(500).send('Error querying database.');
-            } else if (results.length === 0) {
-                console.log('Chat with provided id not found.');
-                res.status(404).send('Chat not found.');
-            } else {
-                const user = results[0];
-=======
->>>>>>> origin/main
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
@@ -527,6 +468,7 @@ app.get('/api/user/get/all', (req, res) => {
         );
     });
 });
+
 
 app.post('/api/user/changename', (req, res) => {
     // Gelen veri
