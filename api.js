@@ -14,8 +14,8 @@ app.use(bodyParser.json());
 
 const dbConfig = {
     host: process.env.MYSQL_HOST,
-    user: "projech1_kullanici",
-    password: "L6P]hm6(3cSOd9",
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
     database: "projech1_data"
 };
 
