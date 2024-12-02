@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 const dbConfig = {
-    host: "77.223.138.139",
+    host: process.env.MYSQL_HOST,
     user: "projech1_kullanici",
     password: "L6P]hm6(3cSOd9",
     database: "projech1_data"
