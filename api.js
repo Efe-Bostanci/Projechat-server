@@ -238,12 +238,12 @@ app.post('/api/user/deleteuser', (req, res) => {
 });
 
 app.put('/api/user/changepassword', (req, res) => {
-    const {username, password, newpassword} = req.body;
+    const {email, password, newpassword} = req.body;
 
     getConnectionAndExecute(req, res, (connection) => {
         connection.query(
-            'UPDATE users SET password = ? WHERE username = ? AND password = ?',
-            [newpassword, username, password],
+            'UPDATE users SET password = ? WHERE email = ? AND password = ?',
+            [newpassword, email, password],
             (err, results) => {
                 if (err) {
                     console.log('Error querying MySQL: ', err);
