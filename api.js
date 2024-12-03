@@ -250,7 +250,7 @@ app.put('/api/user/changepassword', (req, res) => {
                     res.status(500).send('Error updating user password in database.');
                 } else if (results.affectedRows === 0) {
                     console.log('No user found with provided credentials.');
-                    res.status(401).send('Invalid username or password.');
+                    res.status(401).send('Invalid email or password.');
                 } else {
                     console.log('User password updated: ', results.affectedRows);
                     res.status(200).send('User password updated.');
